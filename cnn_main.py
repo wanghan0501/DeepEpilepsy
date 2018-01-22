@@ -32,6 +32,9 @@ conf = config.CNNConfig(dropout_keep_prob=0.5,
                         image_shape=(61, 73, 61, 2),
                         batch_size=1,
                         max_epoch=200,
+                        capacity=64,
+                        num_threads=2,
+                        min_after_dequeue=5,
                         train_data_path='tfdata/cnn_tfdata/epilepsy_cnn_train.tfrecords',
                         test_data_path='tfdata/cnn_tfdata/epilepsy_cnn_test.tfrecords', )
 

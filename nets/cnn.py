@@ -24,7 +24,7 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Conv3d_1_3x3x3'
             net = slim.conv3d(inputs,
                               num_outputs=128,
-                              kernel_size=[3, 3, 3],
+                              kernel_size=[7, 7, 7],
                               weights_initializer=trunc_normal(1.0),
                               scope=end_point)
             end_points[end_point] = net
@@ -100,6 +100,50 @@ def epilepsy_3d_cnn(inputs,
 
 
 epilepsy_3d_cnn.default_image_size = (61, 73, 61)
+
+
+def epilepsy_3d_cnn_arg_scope(weight_decay=0.00004,
+                              use_batch_norm=True,
+                              batch_norm_decay=0.9997,
+                              batch_norm_epsilon=0.001,
+                              activation_fn=tf.nn.relu):
+    """Defines the default arg scope for inception models.
+    Args:
+      weight_decay: The weight decay to use for regularizing the model.
+      use_batch_norm: "If `True`, batch_norm is applied after each convolution.
+      batch_norm_decay: Decay for batch norm moving average.
+      batch_norm_epsilon: Small float added to variance to avoid dividing by zero
+        in batch norm.
+      activation_fn: Activation function for conv2d.
+    Returns:
+      An `arg_scope` to use for the inception models.
+    """
+    batch_norm_params = {
+        # Decay for the moving averages.
+        'decay': batch_norm_decay,
+        # epsilon to prevent 0s in variance.
+        'epsilon': batch_norm_epsilon,
+        # collection containing update_ops.
+        'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        # use fused batch norm if possible.
+        'fused': None,
+    }
+    if use_batch_norm:
+        normalizer_fn = slim.batch_norm
+        normalizer_params = batch_norm_params
+    else:
+        normalizer_fn = None
+        normalizer_params = {}
+    # Set weight_decay for weights in Conv and FC layers.
+    with slim.arg_scope([slim.conv3d, slim.fully_connected],
+                        weights_regularizer=slim.l2_regularizer(weight_decay)):
+        with slim.arg_scope(
+                [slim.conv3d],
+                weights_initializer=slim.variance_scaling_initializer(),
+                activation_fn=activation_fn,
+                normalizer_fn=normalizer_fn,
+                normalizer_params=normalizer_params) as sc:
+            return sc
 
 # def epilepsy_3D(inputs,
 #                 num_classes=2,

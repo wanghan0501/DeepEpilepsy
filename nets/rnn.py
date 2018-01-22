@@ -8,11 +8,12 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from .cnn import epilepsy_3d_cnn_base
+from .cnn import epilepsy_3d_cnn_base, epilepsy_3d_cnn_arg_scope
 
 
 def epilepsy_3d_cnn_cell(inputs, scope='Epilepsy_3D_CNN_Cell'):
-    net, _ = epilepsy_3d_cnn_base(inputs, scope=scope)
+    with slim.arg_scope(epilepsy_3d_cnn_arg_scope()):
+        net, _ = epilepsy_3d_cnn_base(inputs, scope=scope)
     net = slim.flatten(net, scope='Flatten')
     return net
 

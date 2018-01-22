@@ -7,11 +7,10 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 """
 
 import tensorflow as tf
+from tensorflow.contrib import slim
 
-from nets.cnn import epilepsy_3d_cnn
+from nets.cnn import epilepsy_3d_cnn, epilepsy_3d_cnn_arg_scope
 from nets.rnn import epilepsy_3d_rnn
-
-slim = tf.contrib.slim
 
 
 class Epilepsy3dCnn(object):
@@ -22,10 +21,12 @@ class Epilepsy3dCnn(object):
 
         self._create_placeholder()
         if self._config.is_training:
-            self._create_train_model()
-            self._create_test_model()
+            with slim.arg_scope(epilepsy_3d_cnn_arg_scope()):
+                self._create_train_model()
+                self._create_test_model()
         else:
-            self._create_test_model()
+            with slim.arg_scope(epilepsy_3d_cnn_arg_scope()):
+                self._create_test_model()
 
     def _create_placeholder(self):
         self.inputs = tf.placeholder(dtype=tf.float32, shape=self._input_shape, name="inputs")
@@ -42,7 +43,7 @@ class Epilepsy3dCnn(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=1)
+        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
         # get classes
@@ -118,7 +119,7 @@ class Epilepsy3dRnn(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=1)
+        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
         # get classes

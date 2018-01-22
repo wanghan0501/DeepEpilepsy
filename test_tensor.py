@@ -29,8 +29,8 @@ print(data1.shape)
 inputs = tf.placeholder(dtype=tf.float32, shape=[None, 61, 73, 61, 2])
 
 net = slim.conv3d(inputs,
-                  num_outputs=256,
-                  kernel_size=[3, 3, 3],
+                  num_outputs=128,
+                  kernel_size=[7, 7, 7],
                   stride=2,
                   padding='SAME')
 net = slim.max_pool3d(net,
