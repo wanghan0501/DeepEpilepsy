@@ -19,6 +19,7 @@ from dataset.tfrecord import get_shuffle_batch
 from nets.model import Epilepsy3dCnn
 from utils import config
 from utils.log import Logger
+from utils.metrics import Confusion
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 config_gpu = tf.ConfigProto()
@@ -65,13 +66,14 @@ with tf.Session(config=config_gpu) as sess:
                        tf.local_variables_initializer())
     sess.run(init_op)
 
-    saver = tf.train.Saver()
+    acc_saver = tf.train.Saver()
+    f1_saver = tf.train.Saver()
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess, coord=coord)
 
     max_test_acc, max_test_acc_epoch = 0, 0
+    max_test_f1, max_test_f1_epoch = 0, 0
     for epoch_idx in range(conf.max_epoch):
-
         # train op
         for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
             curr_train_image, curr_train_label = sess.run([train_batch_images, train_batch_labels])
@@ -87,16 +89,17 @@ with tf.Session(config=config_gpu) as sess:
             curr_train_acc, curr_train_loss, curr_train_confusion_matrix = sess.run(
                 [model.test_accuracy, model.test_loss, model.test_confusion_matrix],
                 feed_dict={model.inputs: curr_train_image, model.labels: curr_train_label})
-
             train_acc_array.append(curr_train_acc)
             train_loss_array.append(curr_train_loss)
             train_confusion_matrix += curr_train_confusion_matrix
         [[TN, FP], [FN, TP]] = train_confusion_matrix
-        logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
+        train_metrics = Confusion(train_confusion_matrix)
+        logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
             epoch_idx,
             TP, TN, FP, FN,
             np.average(train_loss_array),
-            np.average(train_acc_array)))
+            np.average(train_acc_array),
+            train_metrics.f1(1)))
 
         # test
         test_acc_array = []
@@ -112,23 +115,37 @@ with tf.Session(config=config_gpu) as sess:
             test_loss_array.append(cur_test_loss)
             test_confusion_matrix += cur_test_confusion_matrix
         [[TN, FP], [FN, TP]] = test_confusion_matrix
+        test_metrics = Confusion(test_confusion_matrix)
         # for the whole test dataset
         avg_test_acc = np.average(test_acc_array)
         avg_test_loss = np.average(test_loss_array)
         if max_test_acc < avg_test_acc:
             max_test_acc_epoch = epoch_idx
             max_test_acc = avg_test_acc
-            model_save_path = conf.save_model_path + 'epoch_{}_acc_{:.6f}.ckpt'.format(epoch_idx, avg_test_acc)
-            save_path = saver.save(sess, model_save_path)
+            model_save_path = conf.save_model_path + 'epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
+                epoch_idx, avg_test_acc, test_metrics.f1(1))
+            save_path = acc_saver.save(sess, model_save_path)
             print('Epoch {} model has been saved with test accuracy is {:.6f}'.format(epoch_idx, avg_test_acc))
-        logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
+        if max_test_f1 < test_metrics.f1(1):
+            max_test_f1_epoch = epoch_idx
+            max_test_f1 = test_metrics.f1(1)
+            model_save_path = conf.save_model_path + 'epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
+                epoch_idx, avg_test_acc, test_metrics.f1(1))
+            save_path = f1_saver.save(sess, model_save_path)
+            print('Epoch {} model has been saved with test F1-score is {:.6f}'.format(
+                epoch_idx, test_metrics.f1(1)))
+        logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
             epoch_idx,
             TP, TN, FP, FN,
             avg_test_loss,
-            avg_test_acc))
+            avg_test_acc,
+            test_metrics.f1(1)))
         print('The max test accuracy is {:.6f} at epoch {}'.format(
             max_test_acc,
             max_test_acc_epoch))
+        print('The max test F1-score is {:.6f} at epoch {}'.format(
+            max_test_f1,
+            max_test_f1_epoch))
     print('Final epoch has been finished!')
     coord.request_stop()
     coord.join(threads)

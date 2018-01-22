@@ -24,7 +24,7 @@ def epilepsy_3d_rnn(inputs,
                     hidden_size=1024,
                     num_classes=2,
                     is_training=True,
-                    dropout_keep_prob=0.8,
+                    dropout_keep_prob=0.5,
                     prediction_fn=slim.softmax,
                     reuse=None,
                     scope='Epilepsy_3D_RNN'):
