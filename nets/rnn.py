@@ -8,13 +8,17 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from .cnn import epilepsy_3d_cnn_base, epilepsy_3d_cnn_arg_scope
+from .cnn import epilepsy_3d_cnn, epilepsy_3d_cnn_arg_scope
 
 
-def epilepsy_3d_cnn_cell(inputs, scope='Epilepsy_3D_CNN_Cell'):
-    with slim.arg_scope(epilepsy_3d_cnn_arg_scope()):
-        net, _ = epilepsy_3d_cnn_base(inputs, scope=scope)
-    net = slim.flatten(net, scope='Flatten')
+def epilepsy_3d_cnn_cell(inputs,
+                         is_training=True,
+                         reuse=None,
+                         scope='Epilepsy_3D_CNN_Cell'):
+    with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=0.99)):
+        net, _ = epilepsy_3d_cnn(inputs, scope=scope,
+                                 num_classes=None, is_training=is_training, reuse=reuse)
+        net = tf.squeeze(net, [1, 2, 3], name='SpatialSqueeze')
     return net
 
 
@@ -24,7 +28,7 @@ def epilepsy_3d_rnn(inputs,
                     hidden_size=1024,
                     num_classes=2,
                     is_training=True,
-                    dropout_keep_prob=0.5,
+                    dropout_keep_prob=0.8,
                     prediction_fn=slim.softmax,
                     reuse=None,
                     scope='Epilepsy_3D_RNN'):
@@ -48,7 +52,10 @@ def epilepsy_3d_rnn(inputs,
                     tf.get_variable_scope().reuse_variables()
                 # get cnn cell
                 cur_input = tf.reshape(inputs[:, :, :, :, step], (-1, 61, 73, 61))
-                cnn_cell = epilepsy_3d_cnn_cell(cur_input, scope='CNN_Cell')
+                if step > 0:
+                    cnn_cell = epilepsy_3d_cnn_cell(cur_input, is_training=is_training, reuse=True, scope='CNN_Cell')
+                else:
+                    cnn_cell = epilepsy_3d_cnn_cell(cur_input, is_training=is_training, scope='CNN_Cell')
                 # restore the state of LSTM cell
                 cell_output, state = cell(cnn_cell, state)
                 outputs.append(cell_output)

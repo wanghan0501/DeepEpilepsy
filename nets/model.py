@@ -21,11 +21,11 @@ class Epilepsy3dCnn(object):
 
         self._create_placeholder()
         if self._config.is_training:
-            with slim.arg_scope(epilepsy_3d_cnn_arg_scope()):
+            with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=0.99)):
                 self._create_train_model()
                 self._create_test_model()
         else:
-            with slim.arg_scope(epilepsy_3d_cnn_arg_scope()):
+            with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=0.99)):
                 self._create_test_model()
 
     def _create_placeholder(self):

@@ -88,9 +88,23 @@ def get_shuffle_batch(filename, model_config, name='shuffle_batch'):
     with tf.name_scope(name=name):
         queue = tf.train.string_input_producer([filename])
         curr_image, curr_label = read_from_tfrecord(queue, model_config.image_shape)
-        batch_images, batch_labels = tf.train.shuffle_batch([curr_image, curr_label],
-                                                            batch_size=model_config.batch_size,
-                                                            capacity=50,
-                                                            num_threads=1,
-                                                            min_after_dequeue=5)
+        batch_images, batch_labels = tf.train.shuffle_batch(
+            [curr_image, curr_label],
+            batch_size=model_config.batch_size,
+            capacity=model_config.capacity,
+            num_threads=model_config.num_threads,
+            min_after_dequeue=model_config.min_after_dequeue)
+        return batch_images, batch_labels
+
+
+def get_batch(filename, model_config, name='batch'):
+    with tf.name_scope(name=name):
+        queue = tf.train.string_input_producer([filename])
+        curr_image, curr_label = read_from_tfrecord(queue, model_config.image_shape)
+        batch_images, batch_labels = tf.train.batch(
+            [curr_image, curr_label],
+            batch_size=model_config.batch_size,
+            capacity=model_config.capacity,
+            num_threads=model_config.num_threads,
+        )
         return batch_images, batch_labels
