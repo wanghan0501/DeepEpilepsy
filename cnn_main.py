@@ -33,9 +33,9 @@ conf = config.CNNConfig(dropout_keep_prob=0.5,
                         image_shape=(61, 73, 61, 2),
                         lr=1,
                         batch_size=4,
-                        max_epoch=200,
+                        max_epoch=500,
                         capacity=200,
-                        num_threads=4,
+                        num_threads=2,
                         min_after_dequeue=50,
                         train_data_path='tfdata/cnn_tfdata/epilepsy_cnn_train.tfrecords',
                         test_data_path='tfdata/cnn_tfdata/epilepsy_cnn_test.tfrecords', )
@@ -48,7 +48,7 @@ train_batch_images, train_batch_labels = get_shuffle_batch(conf.train_data_path,
                                                            name='train_shuffle_batch')
 # get test 'train' progress batch data
 test_train_batch_images, test_train_batch_labels = get_batch(conf.train_data_path, conf,
-                                                   name='train_batch')
+                                                             name='train_batch')
 # get test 'test' progress batch data
 test_batch_images, test_batch_labels = get_batch(conf.test_data_path, conf,
                                                  name='test_batch')
@@ -114,7 +114,7 @@ with tf.Session(config=config_gpu) as sess:
         test_loss_array = []
         test_confusion_matrix = np.zeros([2, 2], dtype=int)
         for batch_idx in tqdm(range(int(conf.test_data_length / conf.batch_size))):
-            curr_test_image, curr_test_label = sess.run([test_batch_images, test_batch_images])
+            curr_test_image, curr_test_label = sess.run([test_batch_images, test_batch_labels])
             cur_test_loss, cur_test_acc, cur_test_confusion_matrix = sess.run(
                 [model.test_loss, model.test_accuracy, model.test_confusion_matrix],
                 feed_dict={model.inputs: curr_test_image,
