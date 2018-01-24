@@ -4,8 +4,11 @@
 out
 gen
 
-# Data files
+# data files
 data/
 
 # saved model
 **/optimization_model/
+
+# compiled files
+**/*.pyc
