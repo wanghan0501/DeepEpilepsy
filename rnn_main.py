@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-
 
 """
 This program supports python3
@@ -27,21 +27,23 @@ config_gpu.gpu_options.allow_growth = True
 
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-conf = config.RNNConfig(dropout_keep_prob=0.5,
-                        is_training=True,
-                        num_layers=1,
-                        num_steps=190,
-                        hidden_size=1024,
-                        num_classes=2,
-                        image_shape=(61, 73, 61, 190),
-                        batch_size=2,
-                        lr=1,
-                        max_epoch=200,
-                        capacity=64,
-                        num_threads=4,
-                        min_after_dequeue=5,
-                        train_data_path='tfdata/rnn_tfdata/epilepsy_rnn_train.tfrecords',
-                        test_data_path='tfdata/rnn_tfdata/epilepsy_rnn_test.tfrecords', )
+conf = config.RNNConfig(
+    model_name='Epilepsy_3D_RNN',
+    dropout_keep_prob=0.5,
+    is_training=True,
+    num_layers=1,
+    num_steps=190,
+    hidden_size=1024,
+    num_classes=2,
+    image_shape=(61, 73, 61, 190),
+    batch_size=2,
+    lr=1,
+    max_epoch=200,
+    capacity=64,
+    num_threads=4,
+    min_after_dequeue=5,
+    train_data_path='tfdata/rnn_tfdata/epilepsy_rnn_train.tfrecords',
+    test_data_path='tfdata/rnn_tfdata/epilepsy_rnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
@@ -63,7 +65,7 @@ conf.test_data_length = 60
 model = Epilepsy3dCnn(config=conf)
 logger.info('Model construction completed.')
 
-conf.save_model_path = 'saved_models/epilepsy_3d_rnn_{}/'.format(cur_run_timestamp)
+conf.save_model_path = 'saved_models/{}_{}/'.format(conf.model_name, cur_run_timestamp)
 
 # create path to save model
 if not os.path.exists(conf.save_model_path):
@@ -158,6 +160,6 @@ with tf.Session(config=config_gpu) as sess:
         print('The max test F1-score is {:.6f} at epoch {}'.format(
             max_test_f1,
             max_test_f1_epoch))
-    print('Final epoch has been finished!')
+    print('Model {} final epoch has been finished!'.format(conf.model_name))
     coord.request_stop()
     coord.join(threads)

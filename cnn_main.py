@@ -27,18 +27,20 @@ config_gpu.gpu_options.allow_growth = True
 
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-conf = config.CNNConfig(dropout_keep_prob=0.5,
-                        is_training=True,
-                        num_classes=2,
-                        image_shape=(61, 73, 61, 2),
-                        lr=1,
-                        batch_size=4,
-                        max_epoch=500,
-                        capacity=200,
-                        num_threads=2,
-                        min_after_dequeue=50,
-                        train_data_path='tfdata/cnn_tfdata/epilepsy_cnn_train.tfrecords',
-                        test_data_path='tfdata/cnn_tfdata/epilepsy_cnn_test.tfrecords', )
+conf = config.CNNConfig(
+    model_name='Conv3d',
+    dropout_keep_prob=0.5,
+    is_training=True,
+    num_classes=2,
+    image_shape=(61, 73, 61, 2),
+    lr=1,
+    batch_size=4,
+    max_epoch=200,
+    capacity=200,
+    num_threads=2,
+    min_after_dequeue=50,
+    train_data_path='tfdata/cnn_tfdata/epilepsy_cnn_train.tfrecords',
+    test_data_path='tfdata/cnn_tfdata/epilepsy_cnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
@@ -59,7 +61,7 @@ conf.test_data_length = 60
 
 model = Epilepsy3dCnn(config=conf)
 
-conf.save_model_path = 'saved_models/epilepsy_3d_cnn_{}/'.format(cur_run_timestamp)
+conf.save_model_path = 'saved_models/{}_{}/'.format(conf.model_name, cur_run_timestamp)
 
 # create path to save model
 if not os.path.exists(conf.save_model_path):
@@ -155,6 +157,6 @@ with tf.Session(config=config_gpu) as sess:
         print('The max test F1-score is {:.6f} at epoch {}'.format(
             max_test_f1,
             max_test_f1_epoch))
-    print('Final epoch has been finished!')
+    print('Model {} final epoch has been finished!'.format(conf.model_name))
     coord.request_stop()
     coord.join(threads)

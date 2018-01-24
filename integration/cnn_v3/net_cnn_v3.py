@@ -11,6 +11,7 @@ import tensorflow.contrib.slim as slim
 
 trunc_normal = lambda stddev: tf.truncated_normal_initializer(0.0, stddev)
 
+
 def epilepsy_3d_cnn_base(inputs,
                          final_endpoint='Mixed_5c',
                          min_depth=16,

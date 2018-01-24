@@ -98,7 +98,6 @@ def epilepsy_3d_cnn(inputs,
 
     return logits, end_points
 
-
 epilepsy_3d_cnn.default_image_size = (61, 73, 61)
 
 

@@ -6,6 +6,7 @@ gen
 
 # data files
 data/
+logs/
 
 # saved model
 **/optimization_model/

@@ -9,7 +9,7 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 import tensorflow as tf
 from tensorflow.contrib import slim
 
-from nets.cnn import epilepsy_3d_cnn, epilepsy_3d_cnn_arg_scope
+from .net_cnn_v3 import epilepsy_3d_cnn, epilepsy_3d_cnn_arg_scope
 
 
 class Epilepsy3dCnn_V3(object):

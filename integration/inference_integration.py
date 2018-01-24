@@ -15,11 +15,11 @@ from integration.cnn_v3 import inference_v3
 
 class Inference:
     def __init__(self):
-        v1 = inference_v1.Inference()
-        v2 = inference_v2.Inference()
+        #v1 = inference_v1.Inference()
+        #v2 = inference_v2.Inference()
         v3 = inference_v3.Inference()
-        self.model_list = [v1, v2, v3]
-        # self.model_list=[v3]
+        #self.model_list = [v1, v2, v3]
+        self.model_list=[v3]
 
     def setup(self):
         count = 0

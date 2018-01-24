@@ -18,7 +18,8 @@ class Epilepsy3dCnn_V1(object):
         self._input_shape = (None,) + self._config.image_shape
         self._output_shape = (None,)
         self._create_placeholder()
-        self._create_test_model()
+        with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=0.99)):
+            self._create_test_model()
 
     def _create_placeholder(self):
         self.inputs = tf.placeholder(dtype=tf.float32, shape=self._input_shape, name="inputs")

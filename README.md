@@ -1,2 +1,5 @@
 # DeepEpilepsy
 
+## RNN
+
+## CNN
