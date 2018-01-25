@@ -8,18 +8,17 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 
 import numpy as np
 
-from integration.cnn_v1 import inference_v1
-from integration.cnn_v2 import inference_v2
-from integration.cnn_v3 import inference_v3
+from .cnn_v1 import inference_v1
+from .cnn_v2 import inference_v2
+from .cnn_v3 import inference_v3
 
 
 class Inference:
     def __init__(self):
-        #v1 = inference_v1.Inference()
-        #v2 = inference_v2.Inference()
+        v1 = inference_v1.Inference()
+        v2 = inference_v2.Inference()
         v3 = inference_v3.Inference()
-        #self.model_list = [v1, v2, v3]
-        self.model_list=[v3]
+        self.model_list = [v1, v2, v3]
 
     def setup(self):
         count = 0

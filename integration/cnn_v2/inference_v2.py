@@ -13,7 +13,7 @@ from utils.config import CNNConfig
 
 
 class Inference(object):
-    def __init__(self, model_path='integration/cnn_v2/optimization_model/epoch_44_acc_0.883333_f1_0.915663.ckpt', ):
+    def __init__(self, model_path='integration/cnn_v2/optimization_model/epoch_102_acc_0.900000_f1_0.928571.ckpt', ):
         self.model_path = model_path
         # get model config
         model_config = CNNConfig(model_name='cnn_v2',

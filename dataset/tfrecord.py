@@ -86,10 +86,10 @@ def read_from_tfrecord(filename_queue, img_shape=(61, 73, 61, 2), img_type=tf.fl
 
 def get_shuffle_batch(filename, model_config, name='shuffle_batch'):
     with tf.name_scope(name=name):
-        queue = tf.train.string_input_producer([filename])
-        curr_image, curr_label = read_from_tfrecord(queue, model_config.image_shape)
+        queue = tf.train.string_input_producer([filename], num_epochs=model_config.max_epoch)
+        cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
         batch_images, batch_labels = tf.train.shuffle_batch(
-            [curr_image, curr_label],
+            [cur_images, cur_labels],
             batch_size=model_config.batch_size,
             capacity=model_config.capacity,
             num_threads=model_config.num_threads,
@@ -99,11 +99,11 @@ def get_shuffle_batch(filename, model_config, name='shuffle_batch'):
 
 def get_batch(filename, model_config, name='batch'):
     with tf.name_scope(name=name):
-        queue = tf.train.string_input_producer([filename])
-        curr_image, curr_label = read_from_tfrecord(queue, model_config.image_shape)
+        queue = tf.train.string_input_producer([filename], num_epochs=model_config.max_epoch)
+        cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
         batch_images, batch_labels = tf.train.batch(
-            [curr_image, curr_label],
+            [cur_images, cur_labels],
             batch_size=model_config.batch_size,
             capacity=model_config.capacity,
-            num_threads=model_config.num_threads)
+            num_threads=1)
     return batch_images, batch_labels

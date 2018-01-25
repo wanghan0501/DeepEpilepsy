@@ -29,21 +29,18 @@ cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.CNNConfig(
     model_name='Conv3d',
-    dropout_keep_prob=0.5,
+    dropout_keep_prob=0.8,
     is_training=True,
     num_classes=2,
     image_shape=(61, 73, 61, 2),
-    lr=1,
+    lr=1.5,
     batch_size=4,
     max_epoch=200,
-    capacity=200,
-    num_threads=2,
-    min_after_dequeue=50,
+    capacity=240,
+    num_threads=4,
+    min_after_dequeue=120,
     train_data_path='tfdata/cnn_tfdata/epilepsy_cnn_train.tfrecords',
     test_data_path='tfdata/cnn_tfdata/epilepsy_cnn_test.tfrecords', )
-
-conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
-logger = Logger(filename=conf.logger_path).get_logger()
 
 # get train batch data
 train_batch_images, train_batch_labels = get_shuffle_batch(conf.train_data_path, conf,
@@ -69,6 +66,8 @@ if not os.path.exists(conf.save_model_path):
     os.mkdir(conf.save_model_path + 'acc/')
     os.mkdir(conf.save_model_path + 'f1/')
 
+conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
+logger = Logger(filename=conf.logger_path).get_logger()
 logger.info(str(conf))
 
 with tf.Session(config=config_gpu) as sess:
@@ -81,11 +80,11 @@ with tf.Session(config=config_gpu) as sess:
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess, coord=coord)
 
-    max_test_acc, max_test_acc_epoch = 0, 0
-    max_test_f1, max_test_f1_epoch = 0, 0
-    for epoch_idx in range(conf.max_epoch):
+    max_test_acc, max_test_acc_epoch = 0.0, 0
+    max_test_f1, max_test_f1_epoch = 0.0, 0
+    for epoch_idx in tqdm(range(conf.max_epoch)):
         # train op
-        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
+        for batch_idx in range(int(conf.train_data_length / conf.batch_size)):
             cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
             _ = sess.run([model.train_op], feed_dict={model.inputs: cur_train_image,
                                                       model.labels: cur_train_label})
@@ -94,7 +93,7 @@ with tf.Session(config=config_gpu) as sess:
         train_acc_array = []
         train_loss_array = []
         train_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
+        for batch_idx in range(int(conf.train_data_length / conf.batch_size)):
             cur_train_image, cur_train_label = sess.run([estimate_train_images, estimate_train_labels])
             cur_train_acc, cur_train_loss, cur_train_confusion_matrix = sess.run(
                 [model.test_accuracy, model.test_loss, model.test_confusion_matrix],
@@ -116,7 +115,7 @@ with tf.Session(config=config_gpu) as sess:
         test_acc_array = []
         test_loss_array = []
         test_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in tqdm(range(int(conf.test_data_length / conf.batch_size))):
+        for batch_idx in range(int(conf.test_data_length / conf.batch_size)):
             cur_test_image, cur_test_label = sess.run([estimate_test_images, estimate_test_labels])
             cur_test_loss, cur_test_acc, cur_test_confusion_matrix = sess.run(
                 [model.test_loss, model.test_accuracy, model.test_confusion_matrix],
@@ -143,7 +142,7 @@ with tf.Session(config=config_gpu) as sess:
             model_save_path = conf.save_model_path + 'f1/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
                 epoch_idx, avg_test_acc, test_metrics.f1(1))
             save_path = f1_saver.save(sess, model_save_path)
-            print('Epoch {} model has been saved with test F1-score is {:.6f}'.format(
+            print('Epoch {} model has been saved with test f1-score is {:.6f}'.format(
                 epoch_idx, test_metrics.f1(1)))
         logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
             epoch_idx,
@@ -154,7 +153,7 @@ with tf.Session(config=config_gpu) as sess:
         print('The max test accuracy is {:.6f} at epoch {}'.format(
             max_test_acc,
             max_test_acc_epoch))
-        print('The max test F1-score is {:.6f} at epoch {}'.format(
+        print('The max test f1-score is {:.6f} at epoch {}'.format(
             max_test_f1,
             max_test_f1_epoch))
     print('Model {} final epoch has been finished!'.format(conf.model_name))

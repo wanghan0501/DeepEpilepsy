@@ -146,7 +146,7 @@ with tf.Session(config=config_gpu) as sess:
             model_save_path = conf.save_model_path + 'f1/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
                 epoch_idx, avg_test_acc, test_metrics.f1(1))
             save_path = f1_saver.save(sess, model_save_path)
-            print('Epoch {} model has been saved with test F1-score is {:.6f}'.format(
+            print('Epoch {} model has been saved with test f1-score is {:.6f}'.format(
                 epoch_idx, test_metrics.f1(1)))
         logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
             epoch_idx,

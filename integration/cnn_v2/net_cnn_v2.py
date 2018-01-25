@@ -84,14 +84,16 @@ def epilepsy_3d_cnn(inputs,
                     reuse=None,
                     scope='Epilepsy_3D_CNN'):
     with tf.variable_scope(scope, 'Epilepsy_3D_CNN', [inputs], reuse=reuse) as scope:
-        with slim.arg_scope([slim.dropout], is_training=is_training):
+        with slim.arg_scope([slim.dropout, slim.batch_norm],
+                            is_training=is_training):
             net, end_points = epilepsy_3d_cnn_base(inputs, scope=scope)
 
             with tf.variable_scope('Logits'):
                 # 1 x 1024
                 net = slim.flatten(net, scope='Flatten')
-                net = slim.dropout(net, dropout_keep_prob, scope='Dropout')
-                end_points['PreLogitsFlatten'] = net
+                net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1')
+                net = slim.fully_connected(net, num_outputs=512, activation_fn=None, scope='Fc_1_512')
+                net = slim.dropout(net, dropout_keep_prob, scope='Dropout_2')
                 logits = slim.fully_connected(net, num_classes, activation_fn=None, scope='Logits')
                 end_points['Logits'] = logits
                 end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
