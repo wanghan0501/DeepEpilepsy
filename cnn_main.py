@@ -28,12 +28,13 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.CNNConfig(
-    model_name='Conv3d',
+    model_name='inception_3d_v2',
     dropout_keep_prob=0.8,
     is_training=True,
     num_classes=2,
     image_shape=(61, 73, 61, 2),
     lr=1.5,
+    use_tensorboard=True,
     batch_size=4,
     max_epoch=200,
     capacity=240,
@@ -67,6 +68,7 @@ if not os.path.exists(conf.save_model_path):
     os.mkdir(conf.save_model_path + 'f1/')
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
+conf.tensorboard_path = 'summaries/{}_{}'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
 logger.info(str(conf))
 
@@ -75,6 +77,10 @@ with tf.Session(config=config_gpu) as sess:
                        tf.local_variables_initializer())
     sess.run(init_op)
 
+    if conf.use_tensorboard:
+        writer = tf.summary.FileWriter(conf.tensorboard_path)
+        writer.add_graph(sess.graph)
+
     acc_saver = tf.train.Saver()
     f1_saver = tf.train.Saver()
     coord = tf.train.Coordinator()
@@ -82,9 +88,9 @@ with tf.Session(config=config_gpu) as sess:
 
     max_test_acc, max_test_acc_epoch = 0.0, 0
     max_test_f1, max_test_f1_epoch = 0.0, 0
-    for epoch_idx in tqdm(range(conf.max_epoch)):
+    for epoch_idx in range(conf.max_epoch):
         # train op
-        for batch_idx in range(int(conf.train_data_length / conf.batch_size)):
+        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
             cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
             _ = sess.run([model.train_op], feed_dict={model.inputs: cur_train_image,
                                                       model.labels: cur_train_label})
@@ -93,7 +99,7 @@ with tf.Session(config=config_gpu) as sess:
         train_acc_array = []
         train_loss_array = []
         train_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in range(int(conf.train_data_length / conf.batch_size)):
+        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
             cur_train_image, cur_train_label = sess.run([estimate_train_images, estimate_train_labels])
             cur_train_acc, cur_train_loss, cur_train_confusion_matrix = sess.run(
                 [model.test_accuracy, model.test_loss, model.test_confusion_matrix],
@@ -115,7 +121,7 @@ with tf.Session(config=config_gpu) as sess:
         test_acc_array = []
         test_loss_array = []
         test_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in range(int(conf.test_data_length / conf.batch_size)):
+        for batch_idx in tqdm(range(int(conf.test_data_length / conf.batch_size))):
             cur_test_image, cur_test_label = sess.run([estimate_test_images, estimate_test_labels])
             cur_test_loss, cur_test_acc, cur_test_confusion_matrix = sess.run(
                 [model.test_loss, model.test_accuracy, model.test_confusion_matrix],

@@ -19,6 +19,8 @@ class CNNConfig(object):
                  batch_size=1,
                  plot_batch=25,
                  dropout_keep_prob=0.5,
+                 use_tensorboard=False,
+                 tensorboard_path=None,
                  train_data_path=None,
                  test_data_path=None,
                  train_data_length=None,
@@ -39,6 +41,8 @@ class CNNConfig(object):
         self.image_shape = image_shape
         self.plot_batch = plot_batch
         self.dropout_keep_prob = dropout_keep_prob
+        self.use_tensorboard = use_tensorboard
+        self.tensorboard_path = tensorboard_path
         self.train_data_path = train_data_path
         self.train_data_length = train_data_length
         self.test_data_path = test_data_path
@@ -62,12 +66,17 @@ batch_size = {}
 image_shape = {}
 plot_batch = {}
 dropout_keep_prob = {}
+use_tensorboard = {}
+tensorboard_path = {}
 train_data_path = {}
 train_data_length = {}
 test_data_path = {}
 test_data_length = {}
 logger_path = {}
 save_model_path = {}
+capacity = {}
+num_threads = {}
+min_after_dequeue = {}
 =====Config====
 '''.format(
             self.model_name,
@@ -80,12 +89,17 @@ save_model_path = {}
             self.image_shape,
             self.plot_batch,
             self.dropout_keep_prob,
+            self.use_tensorboard,
+            self.tensorboard_path,
             self.train_data_path,
             self.train_data_length,
             self.test_data_path,
             self.test_data_length,
             self.logger_path,
-            self.save_model_path)
+            self.save_model_path,
+            self.capacity,
+            self.num_threads,
+            self.min_after_dequeue)
         return str
 
 
@@ -104,6 +118,8 @@ class RNNConfig(object):
                  batch_size=1,
                  plot_batch=25,
                  dropout_keep_prob=0.5,
+                 use_tensorboard=False,
+                 tensorboard_path=None,
                  train_data_path=None,
                  test_data_path=None,
                  train_data_length=None,
@@ -127,6 +143,8 @@ class RNNConfig(object):
         self.image_shape = image_shape
         self.plot_batch = plot_batch
         self.dropout_keep_prob = dropout_keep_prob
+        self.use_tensorboard = use_tensorboard
+        self.tensorboard_path = tensorboard_path
         self.train_data_path = train_data_path
         self.train_data_length = train_data_length
         self.test_data_path = test_data_path
@@ -153,6 +171,8 @@ batch_size = {}
 image_shape = {}
 plot_batch = {}
 dropout_keep_prob = {}
+use_tensorboard = {}
+tensorboard_path = {}
 train_data_path = {}
 train_data_length = {}
 test_data_path = {}
@@ -177,6 +197,8 @@ min_after_dequeue = {}
             self.image_shape,
             self.plot_batch,
             self.dropout_keep_prob,
+            self.use_tensorboard,
+            self.tensorboard_path,
             self.train_data_path,
             self.train_data_length,
             self.test_data_path,

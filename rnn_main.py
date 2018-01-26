@@ -66,6 +66,7 @@ model = Epilepsy3dCnn(config=conf)
 logger.info('Model construction completed.')
 
 conf.save_model_path = 'saved_models/{}_{}/'.format(conf.model_name, cur_run_timestamp)
+conf.tensorboard_path = 'summaries/{}_{}'.format(conf.model_name, cur_run_timestamp)
 
 # create path to save model
 if not os.path.exists(conf.save_model_path):
@@ -78,6 +79,10 @@ with tf.Session(config=config_gpu) as sess:
     init_op = tf.group(tf.global_variables_initializer(),
                        tf.local_variables_initializer())
     sess.run(init_op)
+
+    if conf.use_tensorboard:
+        writer = tf.summary.FileWriter(conf.tensorboard_path)
+        writer.add_graph(sess.graph)
 
     acc_saver = tf.train.Saver()
     f1_saver = tf.train.Saver()
