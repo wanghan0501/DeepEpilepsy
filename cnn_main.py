@@ -20,6 +20,7 @@ from nets.model import Epilepsy3dCnn
 from utils import config
 from utils.log import Logger
 from utils.metrics import Confusion
+from utils.plot import plot
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 config_gpu = tf.ConfigProto()
@@ -29,13 +30,15 @@ cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.CNNConfig(
     model_name='inception_3d_v2',
-    dropout_keep_prob=0.8,
+    dropout_keep_prob=0.4,
     is_training=True,
     num_classes=2,
     image_shape=(61, 73, 61, 2),
-    lr=1.5,
-    use_tensorboard=True,
-    batch_size=4,
+    lr=0.1,
+    batch_norm_decay=0.99,
+    use_tensorboard=False,
+    train_batch_size=4,
+    test_batch_size=1,
     max_epoch=200,
     capacity=240,
     num_threads=4,
@@ -44,18 +47,18 @@ conf = config.CNNConfig(
     test_data_path='tfdata/cnn_tfdata/epilepsy_cnn_test.tfrecords', )
 
 # get train batch data
-train_batch_images, train_batch_labels = get_shuffle_batch(conf.train_data_path, conf,
+train_batch_images, train_batch_labels = get_shuffle_batch(conf.train_data_path, conf.train_batch_size, conf,
                                                            name='train_shuffle_batch')
 # estimate 'train' progress batch data
-estimate_train_images, estimate_train_labels = get_batch(conf.train_data_path, conf,
+estimate_train_images, estimate_train_labels = get_batch(conf.train_data_path, conf.train_batch_size, conf,
                                                          name='estimate_train_batch')
 # estimate 'test' progress batch data
-estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf,
+estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf.test_batch_size, conf,
                                                        name='estimate_test_batch')
 
 # set train
-conf.train_data_length = 240
-conf.test_data_length = 60
+conf.train_data_length = 316
+conf.test_data_length = 79
 
 model = Epilepsy3dCnn(config=conf)
 
@@ -64,7 +67,7 @@ conf.save_model_path = 'saved_models/{}_{}/'.format(conf.model_name, cur_run_tim
 # create path to save model
 if not os.path.exists(conf.save_model_path):
     os.mkdir(conf.save_model_path)
-    os.mkdir(conf.save_model_path + 'acc/')
+    # os.mkdir(conf.save_model_path + 'acc/')
     os.mkdir(conf.save_model_path + 'f1/')
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
@@ -72,6 +75,10 @@ conf.tensorboard_path = 'summaries/{}_{}'.format(conf.model_name, cur_run_timest
 logger = Logger(filename=conf.logger_path).get_logger()
 logger.info(str(conf))
 
+epoch_train_acc, epoch_test_acc = [], []
+epoch_train_f1, epoch_test_f1 = [], []
+epoch_train_sens, epoch_test_sens = [], []
+epoch_train_spec, epoch_test_spec = [], []
 with tf.Session(config=config_gpu) as sess:
     init_op = tf.group(tf.global_variables_initializer(),
                        tf.local_variables_initializer())
@@ -90,7 +97,7 @@ with tf.Session(config=config_gpu) as sess:
     max_test_f1, max_test_f1_epoch = 0.0, 0
     for epoch_idx in range(conf.max_epoch):
         # train op
-        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
+        for batch_idx in tqdm(range(int(conf.train_data_length / conf.train_batch_size))):
             cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
             _ = sess.run([model.train_op], feed_dict={model.inputs: cur_train_image,
                                                       model.labels: cur_train_label})
@@ -99,7 +106,7 @@ with tf.Session(config=config_gpu) as sess:
         train_acc_array = []
         train_loss_array = []
         train_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
+        for batch_idx in tqdm(range(int(conf.train_data_length / conf.train_batch_size))):
             cur_train_image, cur_train_label = sess.run([estimate_train_images, estimate_train_labels])
             cur_train_acc, cur_train_loss, cur_train_confusion_matrix = sess.run(
                 [model.test_accuracy, model.test_loss, model.test_confusion_matrix],
@@ -116,12 +123,16 @@ with tf.Session(config=config_gpu) as sess:
             np.average(train_loss_array),
             np.average(train_acc_array),
             train_metrics.f1(1)))
+        epoch_train_acc.append(train_metrics.accuracy())
+        epoch_train_f1.append(train_metrics.f1(1))
+        epoch_train_sens.append(train_metrics.sensibility(1))
+        epoch_train_spec.append(train_metrics.specificity(1))
 
         # estimate 'test' progress
         test_acc_array = []
         test_loss_array = []
         test_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in tqdm(range(int(conf.test_data_length / conf.batch_size))):
+        for batch_idx in tqdm(range(int(conf.test_data_length / conf.test_batch_size))):
             cur_test_image, cur_test_label = sess.run([estimate_test_images, estimate_test_labels])
             cur_test_loss, cur_test_acc, cur_test_confusion_matrix = sess.run(
                 [model.test_loss, model.test_accuracy, model.test_confusion_matrix],
@@ -138,9 +149,9 @@ with tf.Session(config=config_gpu) as sess:
         if max_test_acc < avg_test_acc:
             max_test_acc_epoch = epoch_idx
             max_test_acc = avg_test_acc
-            model_save_path = conf.save_model_path + 'acc/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
-                epoch_idx, avg_test_acc, test_metrics.f1(1))
-            save_path = acc_saver.save(sess, model_save_path)
+            # model_save_path = conf.save_model_path + 'acc/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
+            #   epoch_idx, avg_test_acc, test_metrics.f1(1))
+            # save_path = acc_saver.save(sess, model_save_path)
             print('Epoch {} model has been saved with test accuracy is {:.6f}'.format(epoch_idx, avg_test_acc))
         if max_test_f1 < test_metrics.f1(1):
             max_test_f1_epoch = epoch_idx
@@ -162,6 +173,23 @@ with tf.Session(config=config_gpu) as sess:
         print('The max test f1-score is {:.6f} at epoch {}'.format(
             max_test_f1,
             max_test_f1_epoch))
+        epoch_test_acc.append(test_metrics.accuracy())
+        epoch_test_f1.append(test_metrics.f1(1))
+        epoch_test_sens.append(test_metrics.sensibility(1))
+        epoch_test_spec.append(test_metrics.specificity(1))
+
     print('Model {} final epoch has been finished!'.format(conf.model_name))
     coord.request_stop()
     coord.join(threads)
+
+# plot
+print('Starting plotting.')
+plot(epoch_train_acc, epoch_test_acc, conf.save_model_path + 'acc.png', title=conf.model_name, xlabel='epoch',
+     ylabel='acc')
+plot(epoch_train_f1, epoch_test_f1, conf.save_model_path + 'f1.png', title=conf.model_name, xlabel='epoch',
+     ylabel='f1')
+plot(epoch_train_sens, epoch_test_sens, conf.save_model_path + 'sens.png', title=conf.model_name, xlabel='epoch',
+     ylabel='sens')
+plot(epoch_train_spec, epoch_test_spec, conf.save_model_path + 'spec.png', title=conf.model_name, xlabel='epoch',
+     ylabel='spec')
+print('Ending plotting.')

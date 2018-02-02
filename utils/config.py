@@ -16,7 +16,9 @@ class CNNConfig(object):
                  lr=1,
                  num_classes=2,
                  image_shape=(61, 73, 61, 2),
-                 batch_size=1,
+                 train_batch_size=1,
+                 test_batch_size=1,
+                 batch_norm_decay=0.99,
                  plot_batch=25,
                  dropout_keep_prob=0.5,
                  use_tensorboard=False,
@@ -37,7 +39,9 @@ class CNNConfig(object):
         self.gpu_num = gpu_num
         self.lr = lr
         self.num_classes = num_classes
-        self.batch_size = batch_size
+        self.train_batch_size = train_batch_size
+        self.test_batch_size = test_batch_size
+        self.batch_norm_decay = batch_norm_decay
         self.image_shape = image_shape
         self.plot_batch = plot_batch
         self.dropout_keep_prob = dropout_keep_prob
@@ -62,7 +66,9 @@ max_epoch = {}
 gpu_num = {}
 lr = {}
 num_classes = {}
-batch_size = {}
+train_batch_size = {}
+test_batch_size = {}
+batch_norm_decay = {}
 image_shape = {}
 plot_batch = {}
 dropout_keep_prob = {}
@@ -85,7 +91,9 @@ min_after_dequeue = {}
             self.gpu_num,
             self.lr,
             self.num_classes,
-            self.batch_size,
+            self.train_batch_size,
+            self.test_batch_size,
+            self.batch_norm_decay,
             self.image_shape,
             self.plot_batch,
             self.dropout_keep_prob,
@@ -114,8 +122,8 @@ class RNNConfig(object):
                  hidden_size=512,
                  num_classes=2,
                  lr=1,
-                 image_shape=(61, 73, 61, 190),
                  batch_size=1,
+                 image_shape=(61, 73, 61, 190),
                  plot_batch=25,
                  dropout_keep_prob=0.5,
                  use_tensorboard=False,

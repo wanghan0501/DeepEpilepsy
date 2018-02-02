@@ -22,10 +22,15 @@ def epilepsy_3d_cnn_cell(inputs,
     return net
 
 
+def epilepsy_3d_rnn_base():
+    pass
+
+
 def epilepsy_3d_rnn(inputs,
+                    batch_size=6,
                     num_steps=190,
                     num_layers=2,
-                    hidden_size=1024,
+                    hidden_size=512,
                     num_classes=2,
                     is_training=True,
                     dropout_keep_prob=0.8,
@@ -34,30 +39,23 @@ def epilepsy_3d_rnn(inputs,
                     scope='Epilepsy_3D_RNN'):
     end_points = {}
 
-    with tf.variable_scope(scope, 'Epilepsy_3D_RNN', [inputs], reuse=reuse):
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_size, forget_bias=0, state_is_tuple=True)
+    def lstm_cell():
+        cell = tf.nn.rnn_cell.LSTMCell(hidden_size, reuse=tf.get_variable_scope().reuse)
         if is_training and dropout_keep_prob < 1:
-            lstm_cell = tf.nn.rnn_cell.DropoutWrapper(lstm_cell, output_keep_prob=dropout_keep_prob)
-        cell = tf.nn.rnn_cell.MultiRNNCell([lstm_cell] * num_layers, state_is_tuple=True)
+            return tf.nn.rnn_cell.DropoutWrapper(cell, output_keep_prob=dropout_keep_prob)
+        else:
+            return cell
 
-        # get batch size
-        batch_size = tf.shape(inputs)[0]
-        initial_state = cell.zero_state(batch_size, tf.float32)
-
+    with tf.variable_scope(scope, 'Epilepsy_3D_RNN', [inputs], reuse=reuse):
+        lstm_cellS = tf.nn.rnn_cell.MultiRNNCell([lstm_cell() for _ in range(num_layers)], state_is_tuple=True)
+        initial_state = lstm_cellS.zero_state(batch_size, tf.float32)
         outputs = list()
         state = initial_state
-        with tf.variable_scope('LSTM'):
+        with tf.variable_scope('LSTM_Layer'):
             for step in range(num_steps):
                 if step > 0:
                     tf.get_variable_scope().reuse_variables()
-                # get cnn cell
-                cur_input = tf.reshape(inputs[:, :, :, :, step], (-1, 61, 73, 61))
-                if step > 0:
-                    cnn_cell = epilepsy_3d_cnn_cell(cur_input, is_training=is_training, reuse=True, scope='CNN_Cell')
-                else:
-                    cnn_cell = epilepsy_3d_cnn_cell(cur_input, is_training=is_training, scope='CNN_Cell')
-                # restore the state of LSTM cell
-                cell_output, state = cell(cnn_cell, state)
+                (cell_output, state) = lstm_cellS(inputs[:, step, :], state)
                 outputs.append(cell_output)
         final_state = outputs[-1]
 
@@ -66,7 +64,7 @@ def epilepsy_3d_rnn(inputs,
             end_points['Logits'] = logits
             end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
 
-    return logits, end_points
+        return logits, end_points
 
 
 epilepsy_3d_rnn.default_image_size = (61, 73, 61, 190)

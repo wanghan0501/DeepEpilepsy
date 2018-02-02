@@ -8,8 +8,8 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 
 import tensorflow as tf
 
-from .model_v2 import Epilepsy3dCnn_V2
 from utils.config import CNNConfig
+from .model_v2 import Epilepsy3dCnn_V2
 
 
 class Inference(object):
@@ -18,7 +18,8 @@ class Inference(object):
         # get model config
         model_config = CNNConfig(model_name='cnn_v2',
                                  image_shape=(61, 73, 61, 2),
-                                 batch_size=1,
+                                 train_batch_size=1,
+                                 test_batch_size=1,
                                  is_training=False)
         self.g = tf.Graph()
         with self.g.as_default():

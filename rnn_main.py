@@ -16,7 +16,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from dataset.tfrecord import get_batch, get_shuffle_batch
-from nets.model import Epilepsy3dCnn
+from nets.model import Epilepsy3dRnn
 from utils import config
 from utils.log import Logger
 from utils.metrics import Confusion
@@ -31,11 +31,11 @@ conf = config.RNNConfig(
     model_name='Epilepsy_3D_RNN',
     dropout_keep_prob=0.5,
     is_training=True,
-    num_layers=1,
+    num_layers=2,
     num_steps=190,
-    hidden_size=1024,
+    hidden_size=512,
     num_classes=2,
-    image_shape=(61, 73, 61, 190),
+    image_shape=(190, 160),
     batch_size=2,
     lr=1,
     max_epoch=200,
@@ -49,20 +49,20 @@ conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
 
 # get train batch data
-train_batch_images, train_batch_labels = get_shuffle_batch(conf.train_data_path, conf,
+train_batch_images, train_batch_labels = get_shuffle_batch(conf.train_data_path, conf.batch_size, conf,
                                                            name='train_shuffle_batch')
 # estimate 'train' progress batch data
-estimate_train_images, estimate_train_labels = get_batch(conf.train_data_path, conf,
+estimate_train_images, estimate_train_labels = get_batch(conf.train_data_path, conf.batch_size, conf,
                                                          name='estimate_train_batch')
 # estimate 'test' progress batch data
-estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf,
+estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf.batch_size, conf,
                                                        name='estimate_test_batch')
 
 # set train
-conf.train_data_length = 239
-conf.test_data_length = 60
+conf.train_data_length = 316
+conf.test_data_length = 78
 
-model = Epilepsy3dCnn(config=conf)
+model = Epilepsy3dRnn(config=conf)
 logger.info('Model construction completed.')
 
 conf.save_model_path = 'saved_models/{}_{}/'.format(conf.model_name, cur_run_timestamp)

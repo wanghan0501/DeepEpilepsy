@@ -25,6 +25,12 @@ class Confusion():
     def precision(self, idx=-1):
         return self.TP(idx) / (self.TP(idx) + self.FP(idx))
 
+    def sensibility(self, idx=-1):
+        return self.recall(idx)
+
+    def specificity(self, idx=-1):
+        return self.TN(idx) / (self.TN(idx) + self.FP(idx))
+
     def f1(self, idx=-1):
         return 2 * self.TP(idx) / (2 * self.TP(idx) + self.FP(idx) + self.FN(idx))
 

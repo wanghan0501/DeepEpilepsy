@@ -20,11 +20,11 @@ class Epilepsy3dCnn(object):
         self._output_shape = (None,)
         self._create_placeholder()
         if self._config.is_training:
-            with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=0.99)):
+            with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=self._config.batch_norm_decay)):
                 self._create_train_model()
                 self._create_test_model()
         else:
-            with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=0.99)):
+            with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=self._config.batch_norm_decay)):
                 self._create_test_model()
 
     def _create_placeholder(self):
@@ -122,6 +122,7 @@ class Epilepsy3dRnn(object):
     def _create_train_model(self):
         with tf.name_scope('train_model'):
             train_logits, train_end_points = epilepsy_3d_rnn(self.inputs,
+                                                             batch_size=self._config.batch_size,
                                                              num_steps=self._config.num_steps,
                                                              num_layers=self._config.num_layers,
                                                              hidden_size=self._config.hidden_size,
@@ -160,6 +161,7 @@ class Epilepsy3dRnn(object):
     def _create_test_model(self):
         with tf.name_scope('test_model'):
             test_logits, test_end_points = epilepsy_3d_rnn(self.inputs,
+                                                           batch_size=self._config.batch_size,
                                                            num_steps=self._config.num_steps,
                                                            num_layers=self._config.num_layers,
                                                            hidden_size=self._config.hidden_size,

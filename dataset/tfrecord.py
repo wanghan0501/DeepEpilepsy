@@ -54,7 +54,7 @@ def write_to_tfrecord(file_name, datas, labels, logger=None, read_function=read_
         img = read_function(datas[i])
 
         if img.shape != img_shape:
-            logger.info('File {} shape error!'.format(datas[i]))
+            logger.info('File {} shape {} error!'.format(datas[i], img.shape))
             count += 1
             continue
 
@@ -62,7 +62,7 @@ def write_to_tfrecord(file_name, datas, labels, logger=None, read_function=read_
             continue
 
         image = img.astype(img_type)
-        label = labels[i].astype(np.int64)
+        label = np.int(labels[i])
         feature = {'label': _int64_feature(label),
                    'image': _bytes_feature(image.tobytes())}
         example = tf.train.Example(features=tf.train.Features(feature=feature))
@@ -84,26 +84,27 @@ def read_from_tfrecord(filename_queue, img_shape=(61, 73, 61, 2), img_type=tf.fl
     return image, label
 
 
-def get_shuffle_batch(filename, model_config, name='shuffle_batch'):
+def get_shuffle_batch(filename, batch_size, model_config, name='shuffle_batch'):
     with tf.name_scope(name=name):
         queue = tf.train.string_input_producer([filename], num_epochs=model_config.max_epoch)
         cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
         batch_images, batch_labels = tf.train.shuffle_batch(
             [cur_images, cur_labels],
-            batch_size=model_config.batch_size,
+            batch_size=batch_size,
             capacity=model_config.capacity,
             num_threads=model_config.num_threads,
             min_after_dequeue=model_config.min_after_dequeue)
     return batch_images, batch_labels
 
 
-def get_batch(filename, model_config, name='batch'):
+def get_batch(filename, batch_size, model_config, name='batch'):
     with tf.name_scope(name=name):
         queue = tf.train.string_input_producer([filename], num_epochs=model_config.max_epoch)
         cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
         batch_images, batch_labels = tf.train.batch(
             [cur_images, cur_labels],
-            batch_size=model_config.batch_size,
+            batch_size=batch_size,
             capacity=model_config.capacity,
-            num_threads=1)
+            num_threads=1,
+            allow_smaller_final_batch=True)
     return batch_images, batch_labels
