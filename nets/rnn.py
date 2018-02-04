@@ -119,30 +119,32 @@ def epilepsy_3d_rnn(inputs,
                     tf.get_variable_scope().reuse_variables()
                 (cell_output, state) = lstm_cells(inputs[:, step, :], state)
                 outputs.append(cell_output)
-        # net = tf.convert_to_tensor(outputs, dtype=tf.float32)
-        # # change axis from [num_steps, batch_size, hidden_size] to [batch_size, num_steps, hidden_size]
-        # net = tf.transpose(net, perm=[1, 0, 2])
-        # # expend axis from [batch_size, num_steps, hidden_size] to [batch_size, num_steps, hidden_size, channel]
-        # net = tf.expand_dims(net, axis=3)
-        # with tf.variable_scope('Polling'):
-        #     net = slim.max_pool2d(net, kernel_size=[10, 5], stride=[10, 5], scope='AvgPool_10x5')
-        # with tf.variable_scope('Logits'):
-        #     net = slim.flatten(net, scope='Flatten')
-        #     logits = slim.fully_connected(net, num_classes, activation_fn=None, scope='Logits')
-        #     end_points['Logits'] = logits
-        #     end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
-        #
-        # return logits, end_points
-
         end_points['lstm'] = outputs
 
+        net = tf.convert_to_tensor(outputs, dtype=tf.float32)
+        # change axis from [num_steps, batch_size, hidden_size] to [batch_size, num_steps, hidden_size]
+        net = tf.transpose(net, perm=[1, 0, 2])
+        # expend axis from [batch_size, num_steps, hidden_size] to [batch_size, num_steps, hidden_size, channel]
+        net = tf.expand_dims(net, axis=3)
+        # with tf.variable_scope('Polling'):
+        #     net = slim.max_pool2d(net, kernel_size=[10, 5], stride=[10, 5], scope='AvgPool_10x5')
         with tf.variable_scope('Logits'):
-            finnal_state = outputs[-1]
-            logits = slim.fully_connected(finnal_state, num_classes, activation_fn=None, scope='Logits')
+            net = slim.flatten(net, scope='Flatten')
+            logits = slim.fully_connected(net, num_classes, activation_fn=None, scope='Logits')
             end_points['Logits'] = logits
             end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
 
         return logits, end_points
+
+
+
+        # with tf.variable_scope('Logits'):
+        #     finnal_state = outputs[-1]
+        #     logits = slim.fully_connected(finnal_state, num_classes, activation_fn=None, scope='Logits')
+        #     end_points['Logits'] = logits
+        #     end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
+        #
+        # return logits, end_points
 
 
 epilepsy_3d_rnn.default_image_size = (190, 160)

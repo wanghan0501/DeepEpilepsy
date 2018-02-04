@@ -205,6 +205,12 @@ class Epilepsy3dRnn(object):
                 optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
                 # set train_op
                 train_op = slim.learning.create_train_op(train_loss, optimizer)
+
+                # tvars = tf.trainable_variables()
+                # grads, _ = tf.clip_by_global_norm(tf.gradients(train_loss, tvars), 10)
+                # optimizer = tf.train.GradientDescentOptimizer(self._config.lr)
+                # train_op = optimizer.apply_gradients(zip(grads, tvars))
+
             with tf.name_scope('metrics'):
                 # get curr accuracy
                 train_accuracy = tf.reduce_mean(

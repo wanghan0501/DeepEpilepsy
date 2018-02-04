@@ -25,6 +25,7 @@ def read_mat(mat_path):
 
 def avg_mat(mat, rate=2):
     res = []
+    mat = mat / 1000
     mat = mat.T
     try:
         for row in range(mat.shape[0]):
