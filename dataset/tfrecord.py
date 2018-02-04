@@ -23,6 +23,17 @@ def read_mat(mat_path):
             return dict[key]
 
 
+def avg_mat(mat, rate=2):
+    res = []
+    mat = mat.T
+    try:
+        for row in range(mat.shape[0]):
+            res.append(np.mean(np.reshape(mat[row, :], [mat.shape[1] // rate, rate]), axis=1))
+        return np.array(res).T
+    except ValueError:
+        return np.array([])
+
+
 def read_nii(nii_path):
     nii_img = nipy.load_image(nii_path)
     return np.array(nii_img.get_data())
@@ -37,7 +48,7 @@ def _bytes_feature(value):
 
 
 def write_to_tfrecord(file_name, datas, labels, logger=None, read_function=read_mat, img_shape=(61, 73, 61, 2),
-                      img_type=np.float32):
+                      img_type=np.float32, use_avg=False):
     dir_name = os.path.dirname(file_name)
     if logger is None:
         logger = Logger(filename=dir_name + '/tfrecord_sampling.log', filemode='a').get_logger()
@@ -52,6 +63,8 @@ def write_to_tfrecord(file_name, datas, labels, logger=None, read_function=read_
         if not i % 100:
             logger.info('Write data: {:.5} %% '.format((float(i) / len(datas)) * 100))
         img = read_function(datas[i])
+        if use_avg:
+            img = avg_mat(img)
 
         if img.shape != img_shape:
             logger.info('File {} shape {} error!'.format(datas[i], img.shape))

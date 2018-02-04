@@ -21,7 +21,7 @@ from utils import config
 from utils.log import Logger
 from utils.metrics import Confusion
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 config_gpu = tf.ConfigProto()
 config_gpu.gpu_options.allow_growth = True
 
@@ -29,21 +29,21 @@ cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
     model_name='Epilepsy_3D_RNN',
-    dropout_keep_prob=0.5,
+    dropout_keep_prob=0.35,
     is_training=True,
-    num_layers=2,
-    num_steps=190,
+    num_layers=4,
+    num_steps=95,
     hidden_size=512,
     num_classes=2,
-    image_shape=(190, 160),
+    image_shape=(95, 160),
     batch_size=2,
     lr=1,
     max_epoch=200,
-    capacity=64,
+    capacity=100,
     num_threads=4,
     min_after_dequeue=5,
-    train_data_path='tfdata/rnn_tfdata/epilepsy_rnn_train.tfrecords',
-    test_data_path='tfdata/rnn_tfdata/epilepsy_rnn_test.tfrecords', )
+    train_data_path='tfdata/rnn_tfdata_undersamping/epilepsy_rnn_train.tfrecords',
+    test_data_path='tfdata/rnn_tfdata_undersamping/epilepsy_rnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()

@@ -66,15 +66,17 @@ def sampling():
         TF_DIR + "epilepsy_rnn_train.tfrecords",
         datas=train_X.apply(lambda x: MAT_DIR + x).tolist(),
         labels=train_Y.tolist(),
-        img_shape=(190, 160),
-        logger=logger)
+        img_shape=(95, 160),
+        logger=logger,
+        use_avg=True)
     # write test tfrecords
     write_to_tfrecord(
         TF_DIR + "epilepsy_rnn_test.tfrecords",
         datas=test_X.apply(lambda x: MAT_DIR + x).tolist(),
         labels=test_Y.tolist(),
-        img_shape=(190, 160),
-        logger=logger)
+        img_shape=(95, 160),
+        logger=logger,
+        use_avg=True)
 
 
 if __name__ == '__main__':
