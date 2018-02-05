@@ -146,14 +146,14 @@ with tf.Session(config=config_gpu) as sess:
         # for the whole 'test' progress
         avg_test_acc = np.average(test_acc_array)
         avg_test_loss = np.average(test_loss_array)
-        if max_test_acc < avg_test_acc:
+        if max_test_acc <= avg_test_acc:
             max_test_acc_epoch = epoch_idx
             max_test_acc = avg_test_acc
             # model_save_path = conf.save_model_path + 'acc/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
             #   epoch_idx, avg_test_acc, test_metrics.f1(1))
             # save_path = acc_saver.save(sess, model_save_path)
             print('Epoch {} model has been saved with test accuracy is {:.6f}'.format(epoch_idx, avg_test_acc))
-        if max_test_f1 < test_metrics.f1(1):
+        if max_test_f1 <= test_metrics.f1(1):
             max_test_f1_epoch = epoch_idx
             max_test_f1 = test_metrics.f1(1)
             model_save_path = conf.save_model_path + 'f1/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
