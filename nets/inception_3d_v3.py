@@ -418,22 +418,18 @@ def inception_3d_v3(inputs,
                                     stride=1, padding='SAME'):
                     aux_logits = end_points['Mixed_6e']
                     with tf.variable_scope('AuxLogits'):
-                        '''
-                        because the epilepsy data size (61,73,61,2) is so small, I annotate the 'avg_pool3d' method 
-                        '''
-                        # aux_logits = slim.avg_pool3d(
-                        #     aux_logits, [5, 5, 5], stride=3, padding='VALID',
-                        #     scope='AvgPool_1a_5x5x5')
+                        kernel_size = _reduced_kernel_size_for_small_input(net, [5, 5, 5])
+                        net = slim.avg_pool3d(net, kernel_size, padding='VALID',
+                                              scope='AvgPool_1a_{}x{}x{}'.format(*kernel_size))
                         aux_logits = slim.conv3d(aux_logits, depth(128), [1, 1, 1],
                                                  scope='Conv3d_1b_1x1x1')
-
                         # Shape of feature map before the final layer.
                         kernel_size = _reduced_kernel_size_for_small_input(
                             aux_logits, [5, 5, 5])
                         aux_logits = slim.conv3d(
                             aux_logits, depth(768), kernel_size,
                             weights_initializer=trunc_normal(0.01),
-                            padding='VALID', scope='Conv3d_2a_{}x{}'.format(*kernel_size))
+                            padding='VALID', scope='Conv3d_2a_{}x{}x{}'.format(*kernel_size))
                         aux_logits = slim.conv3d(
                             aux_logits, num_classes, [1, 1, 1], activation_fn=None,
                             normalizer_fn=None, weights_initializer=trunc_normal(0.001),
@@ -446,17 +442,17 @@ def inception_3d_v3(inputs,
             with tf.variable_scope('Logits'):
                 if global_pool:
                     # Global average pooling.
-                    net = tf.reduce_mean(net, [1, 2, 3], keep_dims=True, name='GlobalPool')
+                    net = tf.reduce_mean(net, [1, 2, 3], keepdims=True, name='GlobalPool')
                     end_points['global_pool'] = net
                 else:
                     # Pooling with a fixed kernel size.
                     kernel_size = _reduced_kernel_size_for_small_input(net, [8, 8, 8])
                     net = slim.avg_pool3d(net, kernel_size, padding='VALID',
-                                          scope='AvgPool_1a_{}x{}'.format(*kernel_size))
+                                          scope='AvgPool_1a_{}x{}x{}'.format(*kernel_size))
                     end_points['AvgPool_1a'] = net
                 if not num_classes:
                     return net, end_points
-                # 1 x 1 x 2048
+                # 1 x 1 x 1 x 2048
                 net = slim.dropout(net, keep_prob=dropout_keep_prob, scope='Dropout_1b')
                 end_points['PreLogits'] = net
                 # 2048

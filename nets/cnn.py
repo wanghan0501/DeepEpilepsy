@@ -482,7 +482,7 @@ def epilepsy_3d_cnn(inputs,
                 # Pooling with a fixed kernel size.
                 kernel_size = _reduced_kernel_size_for_small_input(net, [2, 3, 2])
                 net = slim.avg_pool3d(net, kernel_size, padding='VALID',
-                                      scope='AvgPool_1a_{}x{}'.format(*kernel_size))
+                                      scope='AvgPool_1a_{}x{}x{}'.format(*kernel_size))
                 end_points['AvgPool_1a'] = net
 
                 if not num_classes:
