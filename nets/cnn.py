@@ -101,7 +101,6 @@ trunc_normal = lambda stddev: tf.truncated_normal_initializer(0.0, stddev)
 #     return logits, end_points
 
 
-
 def epilepsy_3d_cnn_base(inputs,
                          final_endpoint='Mixed_5c',
                          min_depth=16,
@@ -123,7 +122,7 @@ def epilepsy_3d_cnn_base(inputs,
         ):
 
             # 61 x 73 x 61 x 2
-            end_point = 'Conv2d_1a_7x7x7'
+            end_point = 'Conv3d_1a_7x7x7'
 
             net = slim.conv3d(
                 inputs,
@@ -140,13 +139,13 @@ def epilepsy_3d_cnn_base(inputs,
             end_points[end_point] = net
             if end_point == final_endpoint: return net, end_points
             # 16 x 19 x 16 x 64
-            end_point = 'Conv2d_2b_1x1x1'
+            end_point = 'Conv3d_2b_1x1x1'
             net = slim.conv3d(net, depth(64), [1, 1, 1], scope=end_point,
                               weights_initializer=trunc_normal(0.1))
             end_points[end_point] = net
             if end_point == final_endpoint: return net, end_points
             # 16 x 19 x 16 x 64
-            end_point = 'Conv2d_2c_3x3x3'
+            end_point = 'Conv3d_2c_3x3x3'
             net = slim.conv3d(net, depth(192), [3, 3, 3], scope=end_point)
             end_points[end_point] = net
             if end_point == final_endpoint: return net, end_points
@@ -160,29 +159,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_3b'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(64), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(64), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(64), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(64), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(64), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(96), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(96), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.avg_pool3d(net, [3, 3, 3], scope='AvgPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(32), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -191,29 +190,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_3c'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(64), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(64), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(64), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(96), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(64), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(96), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(96), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.avg_pool3d(net, [3, 3, 3], scope='AvgPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(64), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -225,18 +224,18 @@ def epilepsy_3d_cnn_base(inputs,
                     branch_0 = slim.conv3d(
                         net, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_0 = slim.conv3d(branch_0, depth(160), [3, 3, 3], stride=2,
-                                           scope='Conv2d_1a_3x3x3')
+                                           scope='Conv3d_1a_3x3x3')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(64), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(
-                        branch_1, depth(96), [3, 3, 3], scope='Conv2d_0b_3x3x3')
+                        branch_1, depth(96), [3, 3, 3], scope='Conv3d_0b_3x3x3')
                     branch_1 = slim.conv3d(
-                        branch_1, depth(96), [3, 3, 3], stride=2, scope='Conv2d_1a_3x3x3')
+                        branch_1, depth(96), [3, 3, 3], stride=2, scope='Conv3d_1a_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.max_pool3d(
                         net, [3, 3, 3], stride=2, scope='MaxPool_1a_3x3x3')
@@ -247,29 +246,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_4b'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(224), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(224), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(64), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(
-                        branch_1, depth(96), [3, 3, 3], scope='Conv2d_0b_3x3x3')
+                        branch_1, depth(96), [3, 3, 3], scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(96), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(128), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(128), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.avg_pool3d(net, [3, 3, 3], scope='AvgPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -278,29 +277,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_4c'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(192), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(192), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(96), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(128), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(96), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(128), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(128), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.avg_pool3d(net, [3, 3, 3], scope='AvgPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -309,29 +308,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_4d'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(160), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(160), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(160), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(160), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(160), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.avg_pool3d(net, [3, 3, 3], scope='AvgPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(96), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -340,29 +339,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_4e'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(96), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(96), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(192), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(160), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(192), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(192), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.avg_pool3d(net, [3, 3, 3], scope='AvgPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(96), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -374,18 +373,18 @@ def epilepsy_3d_cnn_base(inputs,
                     branch_0 = slim.conv3d(
                         net, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_0 = slim.conv3d(branch_0, depth(192), [3, 3, 3], stride=2,
-                                           scope='Conv2d_1a_3x3x3')
+                                           scope='Conv3d_1a_3x3x3')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(192), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(256), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_1 = slim.conv3d(branch_1, depth(256), [3, 3, 3], stride=2,
-                                           scope='Conv2d_1a_3x3x3')
+                                           scope='Conv3d_1a_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.max_pool3d(net, [3, 3, 3], stride=2,
                                                scope='MaxPool_1a_3x3x3')
@@ -397,29 +396,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_5b'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(352), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(352), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(192), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(320), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(160), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(224), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(224), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.avg_pool3d(net, [3, 3, 3], scope='AvgPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -428,29 +427,29 @@ def epilepsy_3d_cnn_base(inputs,
             end_point = 'Mixed_5c'
             with tf.variable_scope(end_point):
                 with tf.variable_scope('Branch_0'):
-                    branch_0 = slim.conv3d(net, depth(352), [1, 1, 1], scope='Conv2d_0a_1x1x1')
+                    branch_0 = slim.conv3d(net, depth(352), [1, 1, 1], scope='Conv3d_0a_1x1x1')
                 with tf.variable_scope('Branch_1'):
                     branch_1 = slim.conv3d(
                         net, depth(192), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_1 = slim.conv3d(branch_1, depth(320), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                 with tf.variable_scope('Branch_2'):
                     branch_2 = slim.conv3d(
                         net, depth(192), [1, 1, 1],
                         weights_initializer=trunc_normal(0.09),
-                        scope='Conv2d_0a_1x1x1')
+                        scope='Conv3d_0a_1x1x1')
                     branch_2 = slim.conv3d(branch_2, depth(224), [3, 3, 3],
-                                           scope='Conv2d_0b_3x3x3')
+                                           scope='Conv3d_0b_3x3x3')
                     branch_2 = slim.conv3d(branch_2, depth(224), [3, 3, 3],
-                                           scope='Conv2d_0c_3x3x3')
+                                           scope='Conv3d_0c_3x3x3')
                 with tf.variable_scope('Branch_3'):
                     branch_3 = slim.max_pool3d(net, [3, 3, 3], scope='MaxPool_0a_3x3x3')
                     branch_3 = slim.conv3d(
                         branch_3, depth(128), [1, 1, 1],
                         weights_initializer=trunc_normal(0.1),
-                        scope='Conv2d_0b_1x1x1')
+                        scope='Conv3d_0b_1x1x1')
                 net = tf.concat(
                     axis=concat_dim, values=[branch_0, branch_1, branch_2, branch_3])
                 end_points[end_point] = net
@@ -491,7 +490,7 @@ def epilepsy_3d_cnn(inputs,
                 # 1 x 1 x 1 x 1024
                 net = slim.dropout(net, keep_prob=dropout_keep_prob, scope='Dropout_1b')
                 logits = slim.conv3d(net, num_classes, [1, 1, 1], activation_fn=None,
-                                     normalizer_fn=None, scope='Conv2d_1c_1x1x1')
+                                     normalizer_fn=None, scope='Conv3d_1c_1x1x1')
                 if spatial_squeeze:
                     logits = tf.squeeze(logits, [1, 2, 3], name='SpatialSqueeze')
             end_points['Logits'] = logits

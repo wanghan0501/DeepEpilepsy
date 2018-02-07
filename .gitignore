@@ -13,3 +13,5 @@ logs/
 
 # compiled files
 **/*.pyc
+.ipynb_checkpoints/
+test.ipynb
