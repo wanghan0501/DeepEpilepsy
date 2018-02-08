@@ -10,8 +10,8 @@ import scipy.io as scio
 
 
 def read_mat(mat_path):
-    dict = scio.loadmat(mat_path)
-    for key in dict.keys():
-        print(key)
-        if not key.startswith('__'):
-            return dict[key]
+  dict = scio.loadmat(mat_path)
+  for key in dict.keys():
+    print(key)
+    if not key.startswith('__'):
+      return dict[key]

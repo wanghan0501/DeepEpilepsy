@@ -28,22 +28,22 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
-    model_name='Epilepsy_3D_RNN',
-    dropout_keep_prob=0.5,
-    is_training=True,
-    num_layers=5,
-    num_steps=95,
-    hidden_size=320,
-    num_classes=2,
-    image_shape=(95, 160),
-    batch_size=2,
-    lr=1,
-    max_epoch=500,
-    capacity=100,
-    num_threads=4,
-    min_after_dequeue=5,
-    train_data_path='tfdata/rnn_tfdata_undersampling/epilepsy_rnn_train.tfrecords',
-    test_data_path='tfdata/rnn_tfdata_undersampling/epilepsy_rnn_test.tfrecords', )
+  model_name='Epilepsy_3D_RNN',
+  dropout_keep_prob=0.5,
+  is_training=True,
+  num_layers=5,
+  num_steps=95,
+  hidden_size=320,
+  num_classes=2,
+  image_shape=(95, 160),
+  batch_size=2,
+  lr=1,
+  max_epoch=500,
+  capacity=100,
+  num_threads=4,
+  min_after_dequeue=5,
+  train_data_path='tfdata/rnn_tfdata_undersampling/epilepsy_rnn_train.tfrecords',
+  test_data_path='tfdata/rnn_tfdata_undersampling/epilepsy_rnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
@@ -70,101 +70,101 @@ conf.tensorboard_path = 'summaries/{}_{}'.format(conf.model_name, cur_run_timest
 
 # create path to save model
 if not os.path.exists(conf.save_model_path):
-    os.mkdir(conf.save_model_path)
-    os.mkdir(conf.save_model_path + 'acc/')
-    os.mkdir(conf.save_model_path + 'f1/')
+  os.mkdir(conf.save_model_path)
+  os.mkdir(conf.save_model_path + 'acc/')
+  os.mkdir(conf.save_model_path + 'f1/')
 
 logger.info(str(conf))
 with tf.Session(config=config_gpu) as sess:
-    init_op = tf.group(tf.global_variables_initializer(),
-                       tf.local_variables_initializer())
-    sess.run(init_op)
+  init_op = tf.group(tf.global_variables_initializer(),
+                     tf.local_variables_initializer())
+  sess.run(init_op)
 
-    if conf.use_tensorboard:
-        writer = tf.summary.FileWriter(conf.tensorboard_path)
-        writer.add_graph(sess.graph)
+  if conf.use_tensorboard:
+    writer = tf.summary.FileWriter(conf.tensorboard_path)
+    writer.add_graph(sess.graph)
 
-    acc_saver = tf.train.Saver()
-    f1_saver = tf.train.Saver()
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(sess, coord=coord)
+  acc_saver = tf.train.Saver()
+  f1_saver = tf.train.Saver()
+  coord = tf.train.Coordinator()
+  threads = tf.train.start_queue_runners(sess, coord=coord)
 
-    max_test_acc, max_test_acc_epoch = 0, 0
-    max_test_f1, max_test_f1_epoch = 0, 0
-    for epoch_idx in range(conf.max_epoch):
-        # train op
-        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
-            cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
-            _ = sess.run([model.train_op], feed_dict={model.inputs: cur_train_image,
-                                                      model.labels: cur_train_label})
+  max_test_acc, max_test_acc_epoch = 0, 0
+  max_test_f1, max_test_f1_epoch = 0, 0
+  for epoch_idx in range(conf.max_epoch):
+    # train op
+    for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
+      cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
+      _ = sess.run([model.train_op], feed_dict={model.inputs: cur_train_image,
+                                                model.labels: cur_train_label})
 
-        # estimate 'train' progress
-        train_acc_array = []
-        train_loss_array = []
-        train_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
-            cur_train_image, cur_train_label = sess.run([estimate_train_images, estimate_train_labels])
-            cur_train_acc, cur_train_loss, cur_train_confusion_matrix = sess.run(
-                [model.test_accuracy, model.test_loss, model.test_confusion_matrix],
-                feed_dict={model.inputs: cur_train_image,
-                           model.labels: cur_train_label})
-            train_acc_array.append(cur_train_acc)
-            train_loss_array.append(cur_train_loss)
-            train_confusion_matrix += cur_train_confusion_matrix
-        [[TN, FP], [FN, TP]] = train_confusion_matrix
-        train_metrics = Confusion(train_confusion_matrix)
-        logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
-            epoch_idx,
-            TP, TN, FP, FN,
-            np.average(train_loss_array),
-            np.average(train_acc_array),
-            train_metrics.f1(1)))
+    # estimate 'train' progress
+    train_acc_array = []
+    train_loss_array = []
+    train_confusion_matrix = np.zeros([2, 2], dtype=int)
+    for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
+      cur_train_image, cur_train_label = sess.run([estimate_train_images, estimate_train_labels])
+      cur_train_acc, cur_train_loss, cur_train_confusion_matrix = sess.run(
+        [model.test_accuracy, model.test_loss, model.test_confusion_matrix],
+        feed_dict={model.inputs: cur_train_image,
+                   model.labels: cur_train_label})
+      train_acc_array.append(cur_train_acc)
+      train_loss_array.append(cur_train_loss)
+      train_confusion_matrix += cur_train_confusion_matrix
+    [[TN, FP], [FN, TP]] = train_confusion_matrix
+    train_metrics = Confusion(train_confusion_matrix)
+    logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
+      epoch_idx,
+      TP, TN, FP, FN,
+      np.average(train_loss_array),
+      np.average(train_acc_array),
+      train_metrics.f1(1)))
 
-        # estimate 'test' progress
-        test_acc_array = []
-        test_loss_array = []
-        test_confusion_matrix = np.zeros([2, 2], dtype=int)
-        for batch_idx in tqdm(range(int(conf.test_data_length / conf.batch_size))):
-            cur_test_image, cur_test_label = sess.run([estimate_test_images, estimate_test_labels])
-            cur_test_loss, cur_test_acc, cur_test_confusion_matrix = sess.run(
-                [model.test_loss, model.test_accuracy, model.test_confusion_matrix],
-                feed_dict={model.inputs: cur_test_image,
-                           model.labels: cur_test_label})
-            test_acc_array.append(cur_test_acc)
-            test_loss_array.append(cur_test_loss)
-            test_confusion_matrix += cur_test_confusion_matrix
-        [[TN, FP], [FN, TP]] = test_confusion_matrix
-        test_metrics = Confusion(test_confusion_matrix)
-        # for the whole 'test' progress
-        avg_test_acc = np.average(test_acc_array)
-        avg_test_loss = np.average(test_loss_array)
-        if max_test_acc <= avg_test_acc:
-            max_test_acc_epoch = epoch_idx
-            max_test_acc = avg_test_acc
-            model_save_path = conf.save_model_path + 'acc/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
-                epoch_idx, avg_test_acc, test_metrics.f1(1))
-            save_path = acc_saver.save(sess, model_save_path)
-            print('Epoch {} model has been saved with test accuracy is {:.6f}'.format(epoch_idx, avg_test_acc))
-        if max_test_f1 <= test_metrics.f1(1):
-            max_test_f1_epoch = epoch_idx
-            max_test_f1 = test_metrics.f1(1)
-            model_save_path = conf.save_model_path + 'f1/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
-                epoch_idx, avg_test_acc, test_metrics.f1(1))
-            save_path = f1_saver.save(sess, model_save_path)
-            print('Epoch {} model has been saved with test f1-score is {:.6f}'.format(
-                epoch_idx, test_metrics.f1(1)))
-        logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
-            epoch_idx,
-            TP, TN, FP, FN,
-            avg_test_loss,
-            avg_test_acc,
-            test_metrics.f1(1)))
-        print('The max test accuracy is {:.6f} at epoch {}'.format(
-            max_test_acc,
-            max_test_acc_epoch))
-        print('The max test F1-score is {:.6f} at epoch {}'.format(
-            max_test_f1,
-            max_test_f1_epoch))
-    print('Model {} final epoch has been finished!'.format(conf.model_name))
-    coord.request_stop()
-    coord.join(threads)
+    # estimate 'test' progress
+    test_acc_array = []
+    test_loss_array = []
+    test_confusion_matrix = np.zeros([2, 2], dtype=int)
+    for batch_idx in tqdm(range(int(conf.test_data_length / conf.batch_size))):
+      cur_test_image, cur_test_label = sess.run([estimate_test_images, estimate_test_labels])
+      cur_test_loss, cur_test_acc, cur_test_confusion_matrix = sess.run(
+        [model.test_loss, model.test_accuracy, model.test_confusion_matrix],
+        feed_dict={model.inputs: cur_test_image,
+                   model.labels: cur_test_label})
+      test_acc_array.append(cur_test_acc)
+      test_loss_array.append(cur_test_loss)
+      test_confusion_matrix += cur_test_confusion_matrix
+    [[TN, FP], [FN, TP]] = test_confusion_matrix
+    test_metrics = Confusion(test_confusion_matrix)
+    # for the whole 'test' progress
+    avg_test_acc = np.average(test_acc_array)
+    avg_test_loss = np.average(test_loss_array)
+    if max_test_acc <= avg_test_acc:
+      max_test_acc_epoch = epoch_idx
+      max_test_acc = avg_test_acc
+      model_save_path = conf.save_model_path + 'acc/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
+        epoch_idx, avg_test_acc, test_metrics.f1(1))
+      save_path = acc_saver.save(sess, model_save_path)
+      print('Epoch {} model has been saved with test accuracy is {:.6f}'.format(epoch_idx, avg_test_acc))
+    if max_test_f1 <= test_metrics.f1(1):
+      max_test_f1_epoch = epoch_idx
+      max_test_f1 = test_metrics.f1(1)
+      model_save_path = conf.save_model_path + 'f1/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
+        epoch_idx, avg_test_acc, test_metrics.f1(1))
+      save_path = f1_saver.save(sess, model_save_path)
+      print('Epoch {} model has been saved with test f1-score is {:.6f}'.format(
+        epoch_idx, test_metrics.f1(1)))
+    logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
+      epoch_idx,
+      TP, TN, FP, FN,
+      avg_test_loss,
+      avg_test_acc,
+      test_metrics.f1(1)))
+    print('The max test accuracy is {:.6f} at epoch {}'.format(
+      max_test_acc,
+      max_test_acc_epoch))
+    print('The max test F1-score is {:.6f} at epoch {}'.format(
+      max_test_f1,
+      max_test_f1_epoch))
+  print('Model {} final epoch has been finished!'.format(conf.model_name))
+  coord.request_stop()
+  coord.join(threads)

@@ -21,8 +21,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 dataFile = 'data/epilepsy/P001.mat'
 data1 = scio.loadmat(dataFile)
 for key in data1.keys():
-    if not key.startswith('__'):
-        data1 = data1[key]
+  if not key.startswith('__'):
+    data1 = data1[key]
 data1 = data1[np.newaxis, :, :, :, :]
 print(data1.shape)
 
@@ -64,8 +64,8 @@ conf = CNNConfig(is_training=True)
 model = Epilepsy3dCnn(config=conf)
 
 with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    sess.run(tf.local_variables_initializer())
+  sess.run(tf.global_variables_initializer())
+  sess.run(tf.local_variables_initializer())
 
-    output = sess.run(net, {inputs: data1})
-    print(np.shape(output))
+  output = sess.run(net, {inputs: data1})
+  print(np.shape(output))
