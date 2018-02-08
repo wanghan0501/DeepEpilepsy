@@ -453,7 +453,7 @@ def inception_3d_v3(inputs,
         end_points['PreLogits'] = net
         # 2048
         logits = slim.conv3d(net, num_classes, [1, 1, 1], activation_fn=None,
-                             normalizer_fn=None, scope='Conv2d_1c_1x1')
+                             normalizer_fn=None, scope='Conv3d_1c_1x1x1')
         if spatial_squeeze:
           logits = tf.squeeze(logits, [1, 2, 3], name='SpatialSqueeze')
         # 2
