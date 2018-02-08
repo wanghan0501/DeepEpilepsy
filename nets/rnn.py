@@ -8,14 +8,15 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from .cnn import epilepsy_3d_cnn, epilepsy_3d_cnn_arg_scope
+from .cnn import epilepsy_3d_cnn
+from .inception_3d_utils import inception_3d_arg_scope
 
 
 def epilepsy_3d_cnn_cell(inputs,
                          is_training=True,
                          reuse=None,
                          scope='Epilepsy_3D_CNN_Cell'):
-  with slim.arg_scope(epilepsy_3d_cnn_arg_scope(batch_norm_decay=0.99)):
+  with slim.arg_scope(inception_3d_arg_scope(batch_norm_decay=0.99)):
     net, _ = epilepsy_3d_cnn(inputs, scope=scope,
                              num_classes=None, is_training=is_training, reuse=reuse)
     net = tf.squeeze(net, [1, 2, 3], name='SpatialSqueeze')
