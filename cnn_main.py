@@ -16,7 +16,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from dataset.tfrecord import get_batch, get_shuffle_batch
-from nets.model import Epilepsy3dInceptionV2, Epilepsy3dInceptionV3
+from nets.model import Epilepsy3dInceptionV2, Epilepsy3dInceptionV3, Epilepsy3dInceptionResnetV2
 from utils import config
 from utils.log import Logger
 from utils.metrics import Confusion
@@ -29,7 +29,7 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.CNNConfig(
-  model_name='inception_3d_inception_v3',
+  model_name='inception_3d_v3',
   dropout_keep_prob=0.5,
   is_training=True,
   num_classes=2,
@@ -60,10 +60,12 @@ estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf
 conf.train_data_length = 316
 conf.test_data_length = 79
 
-if conf.model_name == 'inception_3d_inception_v2':
+if conf.model_name == 'inception_3d_v2':
   model = Epilepsy3dInceptionV2(config=conf)
-elif conf.model_name == 'inception_3d_inception_v3':
+elif conf.model_name == 'inception_3d_v3':
   model = Epilepsy3dInceptionV3(config=conf)
+elif conf.model_name == 'inception_resnet_3d_v2':
+  model = Epilepsy3dInceptionResnetV2(config=conf)
 else:
   model = Epilepsy3dInceptionV2(config=conf)
 
