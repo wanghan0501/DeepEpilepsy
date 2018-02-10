@@ -35,13 +35,8 @@ def inception_3d_v2_base(inputs,
 
       # 61 x 73 x 61 x 2
       end_point = 'Conv3d_1a_7x7x7'
-
-      net = slim.conv3d(
-        inputs,
-        depth(64), [7, 7, 7],
-        stride=2,
-        weights_initializer=trunc_normal(1.0),
-        scope=end_point)
+      net = slim.conv3d(inputs, depth(64), [7, 7, 7], stride=2, weights_initializer=trunc_normal(1.0),
+                        scope=end_point)
       end_points[end_point] = net
       if end_point == final_endpoint: return net, end_points
 

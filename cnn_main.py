@@ -16,7 +16,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from dataset.tfrecord import get_batch, get_shuffle_batch
-from nets.model import Epilepsy3dInceptionV2, Epilepsy3dInceptionV3, Epilepsy3dInceptionResnetV2
+from nets.model import Epilepsy3dInceptionV2, Epilepsy3dInceptionV3, Epilepsy3dInceptionResnetV2, Epilepsy3dInceptionV4
 from utils import config
 from utils.log import Logger
 from utils.metrics import Confusion
@@ -64,6 +64,8 @@ if conf.model_name == 'inception_3d_v2':
   model = Epilepsy3dInceptionV2(config=conf)
 elif conf.model_name == 'inception_3d_v3':
   model = Epilepsy3dInceptionV3(config=conf)
+elif conf.model_name == 'inception_3d_v4':
+  model = Epilepsy3dInceptionV4(config=conf)
 elif conf.model_name == 'inception_resnet_3d_v2':
   model = Epilepsy3dInceptionResnetV2(config=conf)
 else:
