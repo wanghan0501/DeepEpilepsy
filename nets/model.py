@@ -13,7 +13,7 @@ from nets.inception_3d_utils import inception_3d_arg_scope
 from nets.inception_3d_v2 import inception_3d_v2
 from nets.inception_3d_v3 import inception_3d_v3
 from nets.inception_3d_v4 import inception_3d_v4
-from nets.inception_resnet_3d_v2 import inception_resnet_3d_v2_arg_scope, inception_resnet_3d_v2
+from nets.inception_resnet_3d_v2 import inception_resnet_3d_v2, inception_resnet_3d_v2_arg_scope
 from nets.rnn import epilepsy_3d_rnn
 
 
@@ -206,7 +206,7 @@ class Epilepsy3dInceptionV3(object):
         train_final_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
-        train_loss = train_final_loss + train_aux_loss
+        train_loss = train_final_loss + 0.5 * train_aux_loss
 
         # set optimizer
         optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
@@ -361,7 +361,7 @@ class Epilepsy3dInceptionV4(object):
         train_final_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
-        train_loss = train_final_loss + train_aux_loss
+        train_loss = train_final_loss + 0.5 * train_aux_loss
 
         # set optimizer
         optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
@@ -516,7 +516,7 @@ class Epilepsy3dInceptionResnetV2(object):
         train_final_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
-        train_loss = train_final_loss + train_aux_loss
+        train_loss = train_final_loss + 0.5 * train_aux_loss
 
         # set optimizer
         optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)

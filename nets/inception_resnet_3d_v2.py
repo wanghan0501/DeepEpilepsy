@@ -15,7 +15,7 @@ trunc_normal = lambda stddev: tf.truncated_normal_initializer(0.0, stddev)
 
 def block8_10_8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
   """Builds the 8 x 10 x 8 resnet block."""
-  with tf.variable_scope(scope, 'Block35', [net], reuse=reuse):
+  with tf.variable_scope(scope, 'Block8_10_8', [net], reuse=reuse):
     with tf.variable_scope('Branch_0'):
       tower_conv = slim.conv3d(net, 32, [1, 1, 1], scope='Conv3d_1x1x1')
     with tf.variable_scope('Branch_1'):
@@ -41,7 +41,7 @@ def block8_10_8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None
 
 def block4_5_4(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
   """Builds the 4 x 5 x 4 resnet block."""
-  with tf.variable_scope(scope, 'Block17', [net], reuse=reuse):
+  with tf.variable_scope(scope, 'Block4_5_4', [net], reuse=reuse):
     with tf.variable_scope('Branch_0'):
       tower_conv = slim.conv3d(net, 192, [1, 1, 1], scope='Conv3d_1x1x1')
     with tf.variable_scope('Branch_1'):
@@ -69,7 +69,7 @@ def block4_5_4(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None)
 
 def block2_3_2(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
   """Builds the 2 x 3 x 2 resnet block."""
-  with tf.variable_scope(scope, 'Block8', [net], reuse=reuse):
+  with tf.variable_scope(scope, 'Block2_3_2', [net], reuse=reuse):
     with tf.variable_scope('Branch_0'):
       tower_conv = slim.conv3d(net, 192, [1, 1, 1], scope='Conv3d_1x1x1')
     with tf.variable_scope('Branch_1'):
