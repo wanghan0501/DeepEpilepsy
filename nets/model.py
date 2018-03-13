@@ -79,7 +79,7 @@ class Epilepsy3dInceptionV2(object):
                                                      num_classes=self._config.num_classes,
                                                      is_training=False,
                                                      dropout_keep_prob=1,
-                                                     reuse=True)
+                                                     reuse=tf.AUTO_REUSE)
 
       with tf.name_scope('predictions'):
         test_predictions = test_end_points['Predictions']
@@ -206,12 +206,16 @@ class Epilepsy3dInceptionV3(object):
         train_final_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
-        train_loss = train_final_loss + 0.5 * train_aux_loss
-
+        train_loss = train_final_loss
+        train_aux_loss = train_aux_loss
         # set optimizer
         optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
+        # set optimizer
+        aux_optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
+        # set train_op
+        train_aux_op = slim.learning.create_train_op(train_aux_loss, aux_optimizer)
       with tf.name_scope('metrics'):
         # get curr accuracy
         train_accuracy = tf.reduce_mean(
@@ -222,6 +226,7 @@ class Epilepsy3dInceptionV3(object):
 
       self._train_loss = train_loss
       self._train_op = train_op
+      self._train_aux_op = train_aux_op
       self._train_accuracy = train_accuracy
       self._train_classes = train_classes
       self._train_logits = train_logits
@@ -234,7 +239,7 @@ class Epilepsy3dInceptionV3(object):
                                                      num_classes=self._config.num_classes,
                                                      is_training=False,
                                                      dropout_keep_prob=1,
-                                                     reuse=True)
+                                                     reuse=tf.AUTO_REUSE)
 
       with tf.name_scope('predictions'):
         test_predictions = test_end_points['Predictions']
@@ -277,6 +282,10 @@ class Epilepsy3dInceptionV3(object):
   @property
   def train_op(self):
     return self._train_op
+
+  @property
+  def train_aux_op(self):
+    return self._train_aux_op
 
   @property
   def train_accuracy(self):
@@ -361,12 +370,12 @@ class Epilepsy3dInceptionV4(object):
         train_final_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
-        train_loss = train_final_loss + 0.5 * train_aux_loss
-
-        # set optimizer
+        train_loss = train_final_loss
+        train_aux_loss = train_aux_loss
         optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
-        # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
+        aux_optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
+        train_aux_op = slim.learning.create_train_op(train_aux_loss, aux_optimizer)
       with tf.name_scope('metrics'):
         # get curr accuracy
         train_accuracy = tf.reduce_mean(
@@ -377,6 +386,7 @@ class Epilepsy3dInceptionV4(object):
 
       self._train_loss = train_loss
       self._train_op = train_op
+      self._train_aux_op = train_aux_op
       self._train_accuracy = train_accuracy
       self._train_classes = train_classes
       self._train_logits = train_logits
@@ -389,7 +399,7 @@ class Epilepsy3dInceptionV4(object):
                                                      num_classes=self._config.num_classes,
                                                      is_training=False,
                                                      dropout_keep_prob=1,
-                                                     reuse=True)
+                                                     reuse=tf.AUTO_REUSE)
 
       with tf.name_scope('predictions'):
         test_predictions = test_end_points['Predictions']
@@ -432,6 +442,10 @@ class Epilepsy3dInceptionV4(object):
   @property
   def train_op(self):
     return self._train_op
+
+  @property
+  def train_aux_op(self):
+    return self._train_aux_op
 
   @property
   def train_accuracy(self):
@@ -516,7 +530,7 @@ class Epilepsy3dInceptionResnetV2(object):
         train_final_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
-        train_loss = train_final_loss + 0.5 * train_aux_loss
+        train_loss = train_final_loss + 0.25 * train_aux_loss
 
         # set optimizer
         optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
@@ -544,7 +558,7 @@ class Epilepsy3dInceptionResnetV2(object):
                                                             num_classes=self._config.num_classes,
                                                             is_training=False,
                                                             dropout_keep_prob=1,
-                                                            reuse=True)
+                                                            reuse=tf.AUTO_REUSE)
 
       with tf.name_scope('predictions'):
         test_predictions = test_end_points['Predictions']
@@ -706,7 +720,7 @@ class Epilepsy3dRnn(object):
                                                      num_classes=self._config.num_classes,
                                                      is_training=False,
                                                      dropout_keep_prob=1,
-                                                     reuse=True)
+                                                     reuse=tf.AUTO_REUSE)
       with tf.name_scope('predictions'):
         test_predictions = test_end_points['Predictions']
         test_one_hot_labels = tf.one_hot(indices=tf.cast(self._labels, tf.int32),

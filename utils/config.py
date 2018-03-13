@@ -11,7 +11,8 @@ class CNNConfig(object):
   def __init__(self,
                model_name='Epilepsy_3D_CNN',
                is_training=False,
-               max_epoch=200,
+               max_epoch=500,
+               max_aux_epoch=500,
                gpu_num=1,
                lr=1,
                num_classes=2,
@@ -36,6 +37,7 @@ class CNNConfig(object):
     self.model_name = model_name
     self.is_training = is_training
     self.max_epoch = max_epoch
+    self.max_aux_epoch = max_aux_epoch
     self.gpu_num = gpu_num
     self.lr = lr
     self.num_classes = num_classes
@@ -63,6 +65,7 @@ class CNNConfig(object):
 model_name = {}  
 is_training = {}      
 max_epoch = {}
+max_aux_epoch = {}
 gpu_num = {}
 lr = {}
 num_classes = {}
@@ -88,6 +91,7 @@ min_after_dequeue = {}
       self.model_name,
       self.is_training,
       self.max_epoch,
+      self.max_aux_epoch,
       self.gpu_num,
       self.lr,
       self.num_classes,

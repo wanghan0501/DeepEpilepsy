@@ -76,8 +76,6 @@ else:
 conf.save_model_path = 'saved_models/{}_{}/'.format(conf.model_name, cur_run_timestamp)
 if not os.path.exists(conf.save_model_path):
   os.mkdir(conf.save_model_path)
-  # os.mkdir(conf.save_model_path + 'acc/')
-  os.mkdir(conf.save_model_path + 'f1/')
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 conf.tensorboard_path = 'summaries/{}_{}'.format(conf.model_name, cur_run_timestamp)
@@ -89,7 +87,6 @@ logger.info("ONLY ALFF")
 logger.info("****")
 
 epoch_train_acc, epoch_test_acc = [], []
-epoch_train_f1, epoch_test_f1 = [], []
 epoch_train_sens, epoch_test_sens = [], []
 epoch_train_spec, epoch_test_spec = [], []
 with tf.Session(config=config_gpu) as sess:
@@ -107,7 +104,6 @@ with tf.Session(config=config_gpu) as sess:
   threads = tf.train.start_queue_runners(sess, coord=coord)
 
   max_test_acc, max_test_acc_epoch = 0.0, 0
-  max_test_f1, max_test_f1_epoch = 0.0, 0
   for epoch_idx in range(conf.max_epoch):
     # train op
     for batch_idx in tqdm(range(int(conf.train_data_length / conf.train_batch_size))):
@@ -134,14 +130,12 @@ with tf.Session(config=config_gpu) as sess:
       train_confusion_matrix += cur_train_confusion_matrix
     [[TN, FP], [FN, TP]] = train_confusion_matrix
     train_metrics = Confusion(train_confusion_matrix)
-    logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
+    logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
       epoch_idx,
       TP, TN, FP, FN,
       np.average(train_loss_array),
-      np.average(train_acc_array),
-      train_metrics.f1(1)))
+      np.average(train_acc_array)))
     epoch_train_acc.append(train_metrics.accuracy())
-    epoch_train_f1.append(train_metrics.f1(1))
     epoch_train_sens.append(train_metrics.sensibility(1))
     epoch_train_spec.append(train_metrics.specificity(1))
 
@@ -168,53 +162,34 @@ with tf.Session(config=config_gpu) as sess:
     if max_test_acc <= avg_test_acc:
       max_test_acc_epoch = epoch_idx
       max_test_acc = avg_test_acc
-      # model_save_path = conf.save_model_path + 'acc/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
-      #   epoch_idx, avg_test_acc, test_metrics.f1(1))
-      # save_path = acc_saver.save(sess, model_save_path)
+      model_save_path = conf.save_model_path + 'epoch_{}_acc_{:.6f}.ckpt'.format(
+        epoch_idx, avg_test_acc)
+      save_path = acc_saver.save(sess, model_save_path)
       print('Epoch {} model has been saved with test accuracy is {:.6f}'.format(epoch_idx, avg_test_acc))
-    if max_test_f1 <= test_metrics.f1(1):
-      max_test_f1_epoch = epoch_idx
-      max_test_f1 = test_metrics.f1(1)
-      model_save_path = conf.save_model_path + 'f1/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
-        epoch_idx, avg_test_acc, test_metrics.f1(1))
-      save_path = f1_saver.save(sess, model_save_path)
-      print('Epoch {} model has been saved with test f1-score is {:.6f}'.format(
-        epoch_idx, test_metrics.f1(1)))
-    logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
+    logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
       epoch_idx,
       TP, TN, FP, FN,
       avg_test_loss,
-      avg_test_acc,
-      test_metrics.f1(1)))
+      avg_test_acc))
     print('The max test accuracy is {:.6f} at epoch {}'.format(
       max_test_acc,
       max_test_acc_epoch))
-    print('The max test f1-score is {:.6f} at epoch {}'.format(
-      max_test_f1,
-      max_test_f1_epoch))
     epoch_test_acc.append(test_metrics.accuracy())
-    epoch_test_f1.append(test_metrics.f1(1))
     epoch_test_sens.append(test_metrics.sensibility(1))
     epoch_test_spec.append(test_metrics.specificity(1))
-
   print('Model {} final epoch has been finished!'.format(conf.model_name))
   logger.info('[INFO] The max test accuracy is {:.6f} at epoch {}'.format(
     max_test_acc,
     max_test_acc_epoch))
-  logger.info('[INFO] The max test f1-score is {:.6f} at epoch {}'.format(
-    max_test_f1,
-    max_test_f1_epoch))
   coord.request_stop()
   coord.join(threads)
 
 # plot
 print('Starting plotting.')
 plot(epoch_train_acc, epoch_test_acc, conf.save_model_path + 'acc.png', title=conf.model_name, xlabel='epoch',
-     ylabel='acc')
-plot(epoch_train_f1, epoch_test_f1, conf.save_model_path + 'f1.png', title=conf.model_name, xlabel='epoch',
-     ylabel='f1')
+     ylabel='Accuracy')
 plot(epoch_train_sens, epoch_test_sens, conf.save_model_path + 'sens.png', title=conf.model_name, xlabel='epoch',
-     ylabel='sens')
+     ylabel='Sensitivity')
 plot(epoch_train_spec, epoch_test_spec, conf.save_model_path + 'spec.png', title=conf.model_name, xlabel='epoch',
-     ylabel='spec')
+     ylabel='Specificity')
 print('Ending plotting.')

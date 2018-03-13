@@ -310,11 +310,11 @@ def inception_3d_v3_base(inputs,
                                  padding='VALID', scope='Conv3d_1a_3x3x3')
         with tf.variable_scope('Branch_1'):
           branch_1 = slim.conv3d(net, depth(192), [1, 1, 1], scope='Conv3d_0a_1x1x1')
-          branch_1 = slim.conv3d(branch_1, depth(192), [1, 1, 7],
+          branch_1 = slim.conv3d(branch_1, depth(192), [1, 1, 5],
                                  scope='Conv3d_0b_1x1x7')
-          branch_1 = slim.conv3d(branch_1, depth(192), [1, 7, 1],
+          branch_1 = slim.conv3d(branch_1, depth(192), [1, 5, 1],
                                  scope='Conv3d_0c_1x7x1')
-          branch_1 = slim.conv3d(branch_1, depth(192), [7, 1, 1],
+          branch_1 = slim.conv3d(branch_1, depth(192), [5, 1, 1],
                                  scope='Conv3d_0d_7x1x1')
           branch_1 = slim.conv3d(branch_1, depth(192), [3, 3, 3], stride=2,
                                  padding='VALID', scope='Conv3d_1a_3x3x3')

@@ -60,9 +60,7 @@ estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf
 conf.train_data_length = 316
 conf.test_data_length = 79
 
-if conf.model_name == 'inception_3d_v2':
-  model = Epilepsy3dInceptionV2(config=conf)
-elif conf.model_name == 'inception_3d_v3':
+if conf.model_name == 'inception_3d_v3':
   model = Epilepsy3dInceptionV3(config=conf)
 elif conf.model_name == 'inception_3d_v4':
   model = Epilepsy3dInceptionV4(config=conf)
@@ -97,6 +95,15 @@ with tf.Session(config=config_gpu) as sess:
   f1_saver = tf.train.Saver()
   coord = tf.train.Coordinator()
   threads = tf.train.start_queue_runners(sess, coord=coord)
+
+  logger.info("Starting Aux Training.")
+  for epoch_idx in tqdm(range(conf.max_aux_epoch)):
+    # train aux op
+    for batch_idx in range(int(conf.train_data_length / conf.train_batch_size)):
+      cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
+      _ = sess.run([model.train_aux_op], feed_dict={model.inputs: cur_train_image,
+                                                    model.labels: cur_train_label})
+  logger.info("Ending Aux Training.")
 
   max_test_acc, max_test_acc_epoch = 0.0, 0
   for epoch_idx in range(conf.max_epoch):

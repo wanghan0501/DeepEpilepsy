@@ -64,17 +64,17 @@ def block_inception_b(inputs, scope=None, reuse=None):
         branch_0 = slim.conv3d(inputs, 384, [1, 1, 1], scope='Conv3d_0a_1x1x1')
       with tf.variable_scope('Branch_1'):
         branch_1 = slim.conv3d(inputs, 192, [1, 1, 1], scope='Conv3d_0a_1x1x1')
-        branch_1 = slim.conv3d(branch_1, 224, [1, 1, 5], scope='Conv3d_0b_1x1x5')
-        branch_1 = slim.conv3d(branch_1, 224, [1, 5, 1], scope='Conv3d_0c_1x5x1')
-        branch_1 = slim.conv3d(branch_1, 256, [5, 1, 1], scope='Conv3d_0d_5x1x1')
+        branch_1 = slim.conv3d(branch_1, 224, [1, 1, 3], scope='Conv3d_0b_1x1x3')
+        branch_1 = slim.conv3d(branch_1, 224, [1, 3, 1], scope='Conv3d_0c_1x3x1')
+        branch_1 = slim.conv3d(branch_1, 256, [3, 1, 1], scope='Conv3d_0d_3x1x1')
       with tf.variable_scope('Branch_2'):
         branch_2 = slim.conv3d(inputs, 192, [1, 1, 1], scope='Conv3d_0a_1x1x1')
-        branch_2 = slim.conv3d(branch_2, 192, [5, 1, 1], scope='Conv3d_0b_5x1x1')
-        branch_2 = slim.conv3d(branch_2, 224, [1, 5, 1], scope='Conv3d_0c_1x5x1')
-        branch_2 = slim.conv3d(branch_2, 224, [1, 1, 5], scope='Conv3d_0d_1x1x5')
-        branch_2 = slim.conv3d(branch_2, 224, [5, 1, 1], scope='Conv3d_0e_5x1x1')
-        branch_2 = slim.conv3d(branch_2, 224, [1, 5, 1], scope='Conv3d_0f_1x5x1')
-        branch_2 = slim.conv3d(branch_2, 256, [1, 1, 5], scope='Conv3d_0g_1x1x5')
+        branch_2 = slim.conv3d(branch_2, 192, [3, 1, 1], scope='Conv3d_0b_3x1x1')
+        branch_2 = slim.conv3d(branch_2, 224, [1, 3, 1], scope='Conv3d_0c_1x3x1')
+        branch_2 = slim.conv3d(branch_2, 224, [1, 1, 3], scope='Conv3d_0d_1x1x3')
+        branch_2 = slim.conv3d(branch_2, 224, [3, 1, 1], scope='Conv3d_0e_3x1x1')
+        branch_2 = slim.conv3d(branch_2, 224, [1, 3, 1], scope='Conv3d_0f_1x3x1')
+        branch_2 = slim.conv3d(branch_2, 256, [1, 1, 3], scope='Conv3d_0g_1x1x3')
       with tf.variable_scope('Branch_3'):
         branch_3 = slim.avg_pool3d(inputs, [3, 3, 3], scope='AvgPool_0a_3x3x3')
         branch_3 = slim.conv3d(branch_3, 128, [1, 1, 1], scope='Conv3d_0b_1x1x1')
@@ -93,9 +93,9 @@ def block_reduction_b(inputs, scope=None, reuse=None):
                                scope='Conv3d_1a_3x3x3')
       with tf.variable_scope('Branch_1'):
         branch_1 = slim.conv3d(inputs, 256, [1, 1, 1], scope='Conv3d_0a_1x1x1')
-        branch_1 = slim.conv3d(branch_1, 256, [5, 1, 1], scope='Conv3d_0b_5x1x1')
-        branch_1 = slim.conv3d(branch_1, 288, [1, 5, 1], scope='Conv3d_0c_1x5x1')
-        branch_1 = slim.conv3d(branch_1, 320, [1, 1, 5], scope='Conv3d_0d_1x1x5')
+        branch_1 = slim.conv3d(branch_1, 256, [3, 1, 1], scope='Conv3d_0b_3x1x1')
+        branch_1 = slim.conv3d(branch_1, 288, [1, 3, 1], scope='Conv3d_0c_1x3x1')
+        branch_1 = slim.conv3d(branch_1, 320, [1, 1, 3], scope='Conv3d_0d_1x1x3')
         branch_1 = slim.conv3d(branch_1, 320, [3, 3, 3], stride=2,
                                scope='Conv3d_1a_3x3x3')
       with tf.variable_scope('Branch_2'):
