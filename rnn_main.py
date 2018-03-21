@@ -16,7 +16,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from dataset.tfrecord import get_batch, get_shuffle_batch
-from nets.model import Epilepsy3dRnn
+from nets.model import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
 from utils import config
 from utils.log import Logger
 from utils.metrics import Confusion
@@ -28,16 +28,16 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
-  model_name='Epilepsy_3D_RNN',
+  model_name='unidirectional_lstm',
   dropout_keep_prob=0.5,
   is_training=True,
-  num_layers=5,
+  num_layers=4,
   num_steps=95,
-  hidden_size=320,
+  hidden_size=256,
   num_classes=2,
   image_shape=(95, 160),
-  batch_size=2,
-  lr=1,
+  batch_size=4,
+  lr=0.01,
   max_epoch=500,
   capacity=100,
   num_threads=4,
@@ -62,7 +62,13 @@ estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf
 conf.train_data_length = 316
 conf.test_data_length = 78
 
-model = Epilepsy3dRnn(config=conf)
+if conf.model_name == 'unidirectional_lstm':
+  model = EpilepsyUnidirectionalLSTM(config=conf)
+elif conf.model_name == 'bidirectional_lstm':
+  model = EpilepsyBidirectionalLSTM(config=conf)
+else:
+  model = EpilepsyUnidirectionalLSTM(config=conf)
+
 logger.info('Model construction completed.')
 
 conf.save_model_path = 'saved_models/{}_{}/'.format(conf.model_name, cur_run_timestamp)
@@ -71,10 +77,8 @@ conf.tensorboard_path = 'summaries/{}_{}'.format(conf.model_name, cur_run_timest
 # create path to save model
 if not os.path.exists(conf.save_model_path):
   os.mkdir(conf.save_model_path)
-  os.mkdir(conf.save_model_path + 'acc/')
-  os.mkdir(conf.save_model_path + 'f1/')
-
 logger.info(str(conf))
+
 with tf.Session(config=config_gpu) as sess:
   init_op = tf.group(tf.global_variables_initializer(),
                      tf.local_variables_initializer())
@@ -84,13 +88,11 @@ with tf.Session(config=config_gpu) as sess:
     writer = tf.summary.FileWriter(conf.tensorboard_path)
     writer.add_graph(sess.graph)
 
-  acc_saver = tf.train.Saver()
-  f1_saver = tf.train.Saver()
+  saver = tf.train.Saver()
   coord = tf.train.Coordinator()
   threads = tf.train.start_queue_runners(sess, coord=coord)
 
   max_test_acc, max_test_acc_epoch = 0, 0
-  max_test_f1, max_test_f1_epoch = 0, 0
   for epoch_idx in range(conf.max_epoch):
     # train op
     for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
@@ -113,12 +115,11 @@ with tf.Session(config=config_gpu) as sess:
       train_confusion_matrix += cur_train_confusion_matrix
     [[TN, FP], [FN, TP]] = train_confusion_matrix
     train_metrics = Confusion(train_confusion_matrix)
-    logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
+    logger.info('[Train] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
       epoch_idx,
       TP, TN, FP, FN,
       np.average(train_loss_array),
-      np.average(train_acc_array),
-      train_metrics.f1(1)))
+      np.average(train_acc_array)))
 
     # estimate 'test' progress
     test_acc_array = []
@@ -141,30 +142,18 @@ with tf.Session(config=config_gpu) as sess:
     if max_test_acc <= avg_test_acc:
       max_test_acc_epoch = epoch_idx
       max_test_acc = avg_test_acc
-      model_save_path = conf.save_model_path + 'acc/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
-        epoch_idx, avg_test_acc, test_metrics.f1(1))
-      save_path = acc_saver.save(sess, model_save_path)
+      model_save_path = conf.save_model_path + 'epoch_{}_acc_{:.6f}.ckpt'.format(
+        epoch_idx, avg_test_acc)
+      save_path = saver.save(sess, model_save_path)
       print('Epoch {} model has been saved with test accuracy is {:.6f}'.format(epoch_idx, avg_test_acc))
-    if max_test_f1 <= test_metrics.f1(1):
-      max_test_f1_epoch = epoch_idx
-      max_test_f1 = test_metrics.f1(1)
-      model_save_path = conf.save_model_path + 'f1/epoch_{}_acc_{:.6f}_f1_{:.6f}.ckpt'.format(
-        epoch_idx, avg_test_acc, test_metrics.f1(1))
-      save_path = f1_saver.save(sess, model_save_path)
-      print('Epoch {} model has been saved with test f1-score is {:.6f}'.format(
-        epoch_idx, test_metrics.f1(1)))
-    logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}, F1:{:.6f}'.format(
+    logger.info('[Test] Epoch:{}, TP:{}, TN:{}, FP:{}, FN:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
       epoch_idx,
       TP, TN, FP, FN,
       avg_test_loss,
-      avg_test_acc,
-      test_metrics.f1(1)))
-    print('The max test accuracy is {:.6f} at epoch {}'.format(
+      avg_test_acc))
+    logger.info('The max test accuracy is {:.6f} at epoch {}'.format(
       max_test_acc,
       max_test_acc_epoch))
-    print('The max test F1-score is {:.6f} at epoch {}'.format(
-      max_test_f1,
-      max_test_f1_epoch))
   print('Model {} final epoch has been finished!'.format(conf.model_name))
   coord.request_stop()
   coord.join(threads)
