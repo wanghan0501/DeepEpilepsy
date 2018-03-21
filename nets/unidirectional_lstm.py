@@ -54,6 +54,7 @@ def unidirectional_lstm(inputs,
                         prediction_fn=slim.softmax,
                         state_is_tuple=True,
                         reuse=None,
+                        classify_other_steps=False,
                         scope='UnidirectionalLSTM'):
   with tf.variable_scope(scope, 'UnidirectionalLSTM', [inputs], reuse=reuse):
     end_points = unidirectional_lstm_base(inputs,
@@ -66,9 +67,22 @@ def unidirectional_lstm(inputs,
                                           state_is_tuple=state_is_tuple)
     with tf.variable_scope('Logits'):
       outputs = end_points['forward']
-      final_output = outputs[-1]
-      logits = slim.fully_connected(final_output, num_classes, activation_fn=None, scope='Logits')
-      end_points['Logits'] = logits
-      end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
+      if classify_other_steps:
+        steps_logits = list()
+        steps_predictions = list()
+        for step in outputs:
+          logits = slim.fully_connected(step, num_classes, activation_fn=None, scope='Logits', reuse=tf.AUTO_REUSE)
+          steps_logits.append(logits)
+          predictions = prediction_fn(logits, scope='Predictions')
+          steps_predictions.append(predictions)
+          end_points['Logits'] = logits
+          end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
+        end_points['StepsLogits'] = steps_logits
+        end_points['StepsPredictions'] = steps_predictions
+      else:
+        final_output = outputs[-1]
+        logits = slim.fully_connected(final_output, num_classes, activation_fn=None, scope='Logits')
+        end_points['Logits'] = logits
+        end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
 
     return logits, end_points

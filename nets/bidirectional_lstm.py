@@ -69,6 +69,7 @@ def bidirectional_lstm(inputs,
                        is_training=True,
                        dropout_keep_prob=0.5,
                        prediction_fn=slim.softmax,
+                       classify_other_steps=False,
                        state_is_tuple=True,
                        reuse=None,
                        scope='BidirectionalLSTM'):
@@ -90,9 +91,22 @@ def bidirectional_lstm(inputs,
       # outputs = tf.transpose(outputs, perm=[1, 0, 2])
       end_points['output'] = outputs
       outputs = end_points['output']
-      final_output = outputs[-1]
-      logits = slim.fully_connected(final_output, num_classes, activation_fn=None, scope='Logits')
-      end_points['Logits'] = logits
-      end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
 
+      if classify_other_steps:
+        steps_logits = list()
+        steps_predictions = list()
+        for step in outputs:
+          logits = slim.fully_connected(step, num_classes, activation_fn=None, scope='Logits', reuse=tf.AUTO_REUSE)
+          steps_logits.append(logits)
+          predictions = prediction_fn(logits, scope='Predictions')
+          steps_predictions.append(predictions)
+          end_points['Logits'] = logits
+          end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
+        end_points['StepsLogits'] = steps_logits
+        end_points['StepsPredictions'] = steps_predictions
+      else:
+        final_output = outputs[-1]
+        logits = slim.fully_connected(final_output, num_classes, activation_fn=None, scope='Logits')
+        end_points['Logits'] = logits
+        end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
     return logits, end_points
