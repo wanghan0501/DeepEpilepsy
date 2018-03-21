@@ -20,6 +20,7 @@ from nets.model import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
 from utils import config
 from utils.log import Logger
 from utils.metrics import Confusion
+from utils.plot import plot
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 config_gpu = tf.ConfigProto()
@@ -28,17 +29,17 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
-  model_name='unidirectional_lstm',
+  model_name='bidirectional_lstm',
   dropout_keep_prob=0.5,
   is_training=True,
-  num_layers=4,
+  num_layers=5,
   num_steps=95,
   hidden_size=256,
   num_classes=2,
   image_shape=(95, 160),
-  batch_size=4,
+  batch_size=6,
   lr=0.01,
-  max_epoch=500,
+  max_epoch=1000,
   capacity=100,
   num_threads=4,
   min_after_dequeue=5,
@@ -79,6 +80,9 @@ if not os.path.exists(conf.save_model_path):
   os.mkdir(conf.save_model_path)
 logger.info(str(conf))
 
+epoch_train_acc, epoch_test_acc = [], []
+epoch_train_sens, epoch_test_sens = [], []
+epoch_train_spec, epoch_test_spec = [], []
 with tf.Session(config=config_gpu) as sess:
   init_op = tf.group(tf.global_variables_initializer(),
                      tf.local_variables_initializer())
@@ -120,6 +124,9 @@ with tf.Session(config=config_gpu) as sess:
       TP, TN, FP, FN,
       np.average(train_loss_array),
       np.average(train_acc_array)))
+    epoch_train_acc.append(train_metrics.accuracy())
+    epoch_train_sens.append(train_metrics.sensibility(1))
+    epoch_train_spec.append(train_metrics.specificity(1))
 
     # estimate 'test' progress
     test_acc_array = []
@@ -151,9 +158,22 @@ with tf.Session(config=config_gpu) as sess:
       TP, TN, FP, FN,
       avg_test_loss,
       avg_test_acc))
-    logger.info('The max test accuracy is {:.6f} at epoch {}'.format(
+    logger.info('[Info] The max test accuracy is {:.6f} at epoch {}'.format(
       max_test_acc,
       max_test_acc_epoch))
+    epoch_test_acc.append(test_metrics.accuracy())
+    epoch_test_sens.append(test_metrics.sensibility(1))
+    epoch_test_spec.append(test_metrics.specificity(1))
   print('Model {} final epoch has been finished!'.format(conf.model_name))
   coord.request_stop()
   coord.join(threads)
+
+# plot
+print('Starting plotting.')
+plot(epoch_train_acc, epoch_test_acc, conf.save_model_path + 'acc.png', title=conf.model_name, xlabel='epoch',
+     ylabel='Accuracy')
+plot(epoch_train_sens, epoch_test_sens, conf.save_model_path + 'sens.png', title=conf.model_name, xlabel='epoch',
+     ylabel='Sensibility')
+plot(epoch_train_spec, epoch_test_spec, conf.save_model_path + 'spec.png', title=conf.model_name, xlabel='epoch',
+     ylabel='Specificity')
+print('Ending plotting.')

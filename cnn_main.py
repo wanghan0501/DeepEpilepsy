@@ -160,7 +160,7 @@ with tf.Session(config=config_gpu) as sess:
       TP, TN, FP, FN,
       avg_test_loss,
       avg_test_acc))
-    print('The max test accuracy is {:.6f} at epoch {}'.format(
+    logger.info('[Info] The max test accuracy is {:.6f} at epoch {}'.format(
       max_test_acc,
       max_test_acc_epoch))
     epoch_test_acc.append(test_metrics.accuracy())
@@ -168,9 +168,6 @@ with tf.Session(config=config_gpu) as sess:
     epoch_test_spec.append(test_metrics.specificity(1))
 
   print('Model {} final epoch has been finished!'.format(conf.model_name))
-  logger.info('[INFO] The max test accuracy is {:.6f} at epoch {}'.format(
-    max_test_acc,
-    max_test_acc_epoch))
   coord.request_stop()
   coord.join(threads)
 
