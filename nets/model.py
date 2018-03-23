@@ -55,7 +55,7 @@ class Epilepsy3dInceptionV2(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
+        optimizer = self._config.optimizer(learning_rate=self._config.lr)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
       with tf.name_scope('metrics'):
@@ -208,14 +208,9 @@ class Epilepsy3dInceptionV3(object):
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
         train_loss = train_final_loss
-        train_aux_loss = train_aux_loss
-        # set optimizer
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
-        # set train_op
+        optimizer = self._config.optimizer(learning_rate=self._config.lr)
         train_op = slim.learning.create_train_op(train_loss, optimizer)
-        # set optimizer
-        aux_optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
-        # set train_op
+        aux_optimizer = self._config.optimizer(learning_rate=self._config.lr)
         train_aux_op = slim.learning.create_train_op(train_aux_loss, aux_optimizer)
       with tf.name_scope('metrics'):
         # get curr accuracy
@@ -372,10 +367,9 @@ class Epilepsy3dInceptionV4(object):
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
         train_loss = train_final_loss
-        train_aux_loss = train_aux_loss
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
+        optimizer = self._config.optimizer(learning_rate=self._config.lr)
         train_op = slim.learning.create_train_op(train_loss, optimizer)
-        aux_optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
+        aux_optimizer = self._config.optimizer(learning_rate=self._config.lr)
         train_aux_op = slim.learning.create_train_op(train_aux_loss, aux_optimizer)
       with tf.name_scope('metrics'):
         # get curr accuracy
@@ -531,12 +525,11 @@ class Epilepsy3dInceptionResnetV2(object):
         train_final_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         train_aux_logits = train_end_points['AuxLogits']
         train_aux_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_aux_logits)
-        train_loss = train_final_loss + 0.25 * train_aux_loss
-
-        # set optimizer
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
-        # set train_op
+        train_loss = train_final_loss
+        optimizer = self._config.optimizer(learning_rate=self._config.lr)
         train_op = slim.learning.create_train_op(train_loss, optimizer)
+        aux_optimizer = self._config.optimizer(learning_rate=self._config.lr)
+        train_aux_op = slim.learning.create_train_op(train_aux_loss, aux_optimizer)
       with tf.name_scope('metrics'):
         # get curr accuracy
         train_accuracy = tf.reduce_mean(
@@ -547,6 +540,7 @@ class Epilepsy3dInceptionResnetV2(object):
 
       self._train_loss = train_loss
       self._train_op = train_op
+      self._train_aux_op = train_aux_op
       self._train_accuracy = train_accuracy
       self._train_classes = train_classes
       self._train_logits = train_logits
@@ -602,6 +596,10 @@ class Epilepsy3dInceptionResnetV2(object):
   @property
   def train_op(self):
     return self._train_op
+
+  @property
+  def train_aux_op(self):
+    return self._train_aux_op
 
   @property
   def train_accuracy(self):
@@ -675,7 +673,8 @@ class EpilepsyUnidirectionalLSTM(object):
         hidden_size=self._config.hidden_size,
         num_classes=self._config.num_classes,
         is_training=True,
-        dropout_keep_prob=self._config.dropout_keep_prob)
+        input_keep_prob=self._config.input_keep_prob,
+        output_keep_prob=self._config.output_keep_prob)
       with tf.name_scope('predictions'):
         train_predictions = train_end_points['Predictions']
         train_one_hot_labels = tf.one_hot(indices=tf.cast(self._labels, tf.int32),
@@ -687,7 +686,7 @@ class EpilepsyUnidirectionalLSTM(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
+        optimizer = self._config.optimizer(learning_rate=self._config.lr)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
       with tf.name_scope('metrics'):
@@ -715,7 +714,8 @@ class EpilepsyUnidirectionalLSTM(object):
         hidden_size=self._config.hidden_size,
         num_classes=self._config.num_classes,
         is_training=False,
-        dropout_keep_prob=1,
+        input_keep_prob=1,
+        output_keep_prob=1,
         reuse=tf.AUTO_REUSE)
       with tf.name_scope('predictions'):
         test_predictions = test_end_points['Predictions']
@@ -830,7 +830,8 @@ class EpilepsyBidirectionalLSTM(object):
         hidden_size=self._config.hidden_size,
         num_classes=self._config.num_classes,
         is_training=True,
-        dropout_keep_prob=self._config.dropout_keep_prob)
+        input_keep_prob=self._config.input_keep_prob,
+        output_keep_prob=self._config.output_keep_prob)
       with tf.name_scope('predictions'):
         train_predictions = train_end_points['Predictions']
         train_one_hot_labels = tf.one_hot(indices=tf.cast(self._labels, tf.int32),
@@ -842,7 +843,7 @@ class EpilepsyBidirectionalLSTM(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate=self._config.lr)
+        optimizer = self._config.optimizer(learning_rate=self._config.lr)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
       with tf.name_scope('metrics'):
@@ -870,7 +871,8 @@ class EpilepsyBidirectionalLSTM(object):
         hidden_size=self._config.hidden_size,
         num_classes=self._config.num_classes,
         is_training=False,
-        dropout_keep_prob=1,
+        input_keep_prob=1,
+        output_keep_prob=1,
         reuse=tf.AUTO_REUSE)
       with tf.name_scope('predictions'):
         test_predictions = test_end_points['Predictions']

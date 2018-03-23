@@ -18,17 +18,18 @@ def bidirectional_lstm_base(inputs,
                             num_layers=2,
                             hidden_size=256,
                             is_training=True,
-                            dropout_keep_prob=0.5,
+                            input_keep_prob=1,
+                            output_keep_prob=0.5,
                             state_is_tuple=True,
                             scope='BidirectionalLSTM'):
   end_points = {}
 
   with tf.variable_scope(scope, 'BidirectionalLSTM', [inputs]):
     lstm_cells_fw = tf.nn.rnn_cell.MultiRNNCell(
-      [lstm_cell(is_training, hidden_size, dropout_keep_prob) for _ in range(num_layers)],
+      [lstm_cell(is_training, hidden_size, input_keep_prob, output_keep_prob) for _ in range(num_layers)],
       state_is_tuple=state_is_tuple)
     lstm_cells_bw = tf.nn.rnn_cell.MultiRNNCell(
-      [lstm_cell(is_training, hidden_size, dropout_keep_prob) for _ in range(num_layers)],
+      [lstm_cell(is_training, hidden_size, input_keep_prob, output_keep_prob) for _ in range(num_layers)],
       state_is_tuple=state_is_tuple)
     initial_state_fw = lstm_cells_fw.zero_state(batch_size, tf.float32)
     initial_state_bw = lstm_cells_bw.zero_state(batch_size, tf.float32)
@@ -67,7 +68,8 @@ def bidirectional_lstm(inputs,
                        hidden_size=256,
                        num_classes=2,
                        is_training=True,
-                       dropout_keep_prob=0.5,
+                       input_keep_prob=1,
+                       output_keep_prob=0.5,
                        prediction_fn=slim.softmax,
                        classify_other_steps=False,
                        state_is_tuple=True,
@@ -80,7 +82,8 @@ def bidirectional_lstm(inputs,
                                          num_layers=num_layers,
                                          hidden_size=hidden_size,
                                          is_training=is_training,
-                                         dropout_keep_prob=dropout_keep_prob,
+                                         input_keep_prob=input_keep_prob,
+                                         output_keep_prob=output_keep_prob,
                                          state_is_tuple=state_is_tuple)
     with tf.variable_scope('Logits'):
       forward = end_points['forward']

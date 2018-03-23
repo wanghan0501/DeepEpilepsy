@@ -22,7 +22,7 @@ from utils.log import Logger
 from utils.metrics import Confusion
 from utils.plot import plot
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 config_gpu = tf.ConfigProto()
 config_gpu.gpu_options.allow_growth = True
 
@@ -30,7 +30,10 @@ cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
   model_name='bidirectional_lstm',
-  dropout_keep_prob=0.5,
+  input_keep_prob=1,
+  output_keep_prob=0.8,
+  lr=0.01,
+  optimizer=tf.train.RMSPropOptimizer,
   is_training=True,
   num_layers=5,
   num_steps=95,
@@ -38,7 +41,6 @@ conf = config.RNNConfig(
   num_classes=2,
   image_shape=(95, 160),
   batch_size=6,
-  lr=0.01,
   max_epoch=1000,
   capacity=100,
   num_threads=4,

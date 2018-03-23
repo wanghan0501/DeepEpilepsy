@@ -6,6 +6,8 @@ E-mail address is hanwang.0501@gmail.com.
 Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 """
 
+import tensorflow as tf
+
 
 class CNNConfig(object):
   def __init__(self,
@@ -15,6 +17,7 @@ class CNNConfig(object):
                max_aux_epoch=500,
                gpu_num=1,
                lr=1,
+               optimizer=tf.train.AdadeltaOptimizer,
                num_classes=2,
                image_shape=(61, 73, 61, 2),
                train_batch_size=1,
@@ -40,9 +43,10 @@ class CNNConfig(object):
     self.max_aux_epoch = max_aux_epoch
     self.gpu_num = gpu_num
     self.lr = lr
+    self.optimizer = optimizer
     self.num_classes = num_classes
-    self.train_batch_size = train_batch_size
-    self.test_batch_size = test_batch_size
+    self.train_batch_size = train_batch_size,
+    self.test_batch_size = test_batch_size,
     self.batch_norm_decay = batch_norm_decay
     self.image_shape = image_shape
     self.plot_batch = plot_batch
@@ -68,6 +72,7 @@ max_epoch = {}
 max_aux_epoch = {}
 gpu_num = {}
 lr = {}
+optimizer = {}
 num_classes = {}
 train_batch_size = {}
 test_batch_size = {}
@@ -94,6 +99,7 @@ min_after_dequeue = {}
       self.max_aux_epoch,
       self.gpu_num,
       self.lr,
+      self.optimizer,
       self.num_classes,
       self.train_batch_size,
       self.test_batch_size,
@@ -127,9 +133,11 @@ class RNNConfig(object):
                num_classes=2,
                lr=1,
                batch_size=1,
-               image_shape=(61, 73, 61, 190),
+               image_shape=(95, 160),
                plot_batch=25,
-               dropout_keep_prob=0.5,
+               input_keep_prob=1,
+               output_keep_prob=0.5,
+               optimizer=tf.train.RMSPropOptimizer,
                use_tensorboard=False,
                tensorboard_path=None,
                train_data_path=None,
@@ -154,7 +162,9 @@ class RNNConfig(object):
     self.batch_size = batch_size
     self.image_shape = image_shape
     self.plot_batch = plot_batch
-    self.dropout_keep_prob = dropout_keep_prob
+    self.input_keep_prob = input_keep_prob
+    self.output_keep_prob = output_keep_prob
+    self.optimizer = optimizer
     self.use_tensorboard = use_tensorboard
     self.tensorboard_path = tensorboard_path
     self.train_data_path = train_data_path
@@ -171,7 +181,8 @@ class RNNConfig(object):
     str = '''
 =====Config====
 model_name = {}  
-is_training = {}      
+is_training = {}
+optimizer={}      
 max_epoch = {}
 num_gpu = {}
 num_layers = {}
@@ -182,7 +193,8 @@ lr = {}
 batch_size = {}
 image_shape = {}
 plot_batch = {}
-dropout_keep_prob = {}
+input_keep_prob = {}
+output_keep_prob = {}
 use_tensorboard = {}
 tensorboard_path = {}
 train_data_path = {}
@@ -198,6 +210,7 @@ min_after_dequeue = {}
 '''.format(
       self.model_name,
       self.is_training,
+      self.optimizer,
       self.max_epoch,
       self.num_gpu,
       self.num_layers,
@@ -208,7 +221,8 @@ min_after_dequeue = {}
       self.batch_size,
       self.image_shape,
       self.plot_batch,
-      self.dropout_keep_prob,
+      self.input_keep_prob,
+      self.output_keep_prob,
       self.use_tensorboard,
       self.tensorboard_path,
       self.train_data_path,
