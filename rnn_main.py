@@ -31,9 +31,9 @@ cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 conf = config.RNNConfig(
   model_name='bidirectional_lstm',
   input_keep_prob=1,
-  output_keep_prob=0.8,
+  output_keep_prob=0.5,
   lr=0.01,
-  optimizer=tf.train.RMSPropOptimizer,
+  optimizer=tf.train.AdamOptimizer,
   is_training=True,
   num_layers=5,
   num_steps=95,
@@ -52,14 +52,14 @@ conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
 
 # get train batch data
-train_batch_images, train_batch_labels = get_shuffle_batch(conf.train_data_path, conf.batch_size, conf,
-                                                           name='train_shuffle_batch')
+train_batch_images, train_batch_labels, _ = get_shuffle_batch(conf.train_data_path, conf.batch_size, conf,
+                                                              name='train_shuffle_batch', use_path=True)
 # estimate 'train' progress batch data
-estimate_train_images, estimate_train_labels = get_batch(conf.train_data_path, conf.batch_size, conf,
-                                                         name='estimate_train_batch')
+estimate_train_images, estimate_train_labels, _ = get_batch(conf.train_data_path, conf.batch_size, conf,
+                                                            name='estimate_train_batch', use_path=True)
 # estimate 'test' progress batch data
-estimate_test_images, estimate_test_labels = get_batch(conf.test_data_path, conf.batch_size, conf,
-                                                       name='estimate_test_batch')
+estimate_test_images, estimate_test_labels, _ = get_batch(conf.test_data_path, conf.batch_size, conf,
+                                                          name='estimate_test_batch', use_path=True)
 
 # set train
 conf.train_data_length = 316

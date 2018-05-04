@@ -686,7 +686,11 @@ class EpilepsyUnidirectionalLSTM(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = self._config.optimizer(learning_rate=self._config.lr)
+        global_step = tf.Variable(0, trainable=False)
+        learning_rate = tf.train.exponential_decay(self._config.lr,
+                                                   global_step=global_step,
+                                                   decay_steps=2000, decay_rate=0.96)
+        optimizer = self._config.optimizer(learning_rate=learning_rate)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
       with tf.name_scope('metrics'):

@@ -98,8 +98,8 @@ def bidirectional_lstm(inputs,
       if classify_other_steps:
         steps_logits = list()
         steps_predictions = list()
-        for step in outputs:
-          logits = slim.fully_connected(step, num_classes, activation_fn=None, scope='Logits', reuse=tf.AUTO_REUSE)
+        for step in range(num_steps):
+          logits = slim.fully_connected(outputs[step], num_classes, activation_fn=None, scope='Logits', reuse=tf.AUTO_REUSE)
           steps_logits.append(logits)
           predictions = prediction_fn(logits, scope='Predictions')
           steps_predictions.append(predictions)

@@ -78,47 +78,81 @@ def write_to_tfrecord(file_name, datas, labels, logger=None, read_function=read_
     image = img.astype(img_type)
     label = np.int(labels[i])
     feature = {'label': _int64_feature(label),
-               'image': _bytes_feature(image.tobytes())}
+               'image': _bytes_feature(image.tobytes()),
+               'path': _bytes_feature(datas[i].encode('utf8'))}
     example = tf.train.Example(features=tf.train.Features(feature=feature))
     writer.write(example.SerializeToString())
   writer.close()
   logger.info('Data file {} finished writing! Total record number is {}'.format(file_name, len(datas) - count))
 
 
-def read_from_tfrecord(filename_queue, img_shape=(61, 73, 61, 2), img_type=tf.float32, name='read_tfrecord'):
+def read_from_tfrecord(filename_queue, img_shape=(61, 73, 61, 2), img_type=tf.float32, use_path=False,
+                       name='read_tfrecord', ):
   with tf.name_scope(name=name):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
-    features = tf.parse_single_example(serialized_example,
-                                       features={'label': tf.FixedLenFeature([], tf.int64),
-                                                 'image': tf.FixedLenFeature([], tf.string)})
-    image = tf.decode_raw(features['image'], img_type)
-    image = tf.reshape(image, img_shape)
-    label = tf.cast(features['label'], dtype=tf.int64, name='label')
-  return image, label
+
+    if use_path:
+      features = tf.parse_single_example(serialized_example,
+                                         features={'label': tf.FixedLenFeature([], tf.int64),
+                                                   'image': tf.FixedLenFeature([], tf.string),
+                                                   'path': tf.FixedLenFeature([], tf.string)})
+      image = tf.decode_raw(features['image'], img_type)
+      image = tf.reshape(image, img_shape)
+      label = tf.cast(features['label'], dtype=tf.int64, name='label')
+      path = features['path']
+      return image, label, path
+    else:
+      features = tf.parse_single_example(serialized_example,
+                                         features={'label': tf.FixedLenFeature([], tf.int64),
+                                                   'image': tf.FixedLenFeature([], tf.string)})
+      image = tf.decode_raw(features['image'], img_type)
+      image = tf.reshape(image, img_shape)
+      label = tf.cast(features['label'], dtype=tf.int64, name='label')
+      return image, label
 
 
-def get_shuffle_batch(filename, batch_size, model_config, name='shuffle_batch'):
+def get_shuffle_batch(filename, batch_size, model_config, name='shuffle_batch', use_path=False):
   with tf.name_scope(name=name):
     queue = tf.train.string_input_producer([filename])
-    cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
-    batch_images, batch_labels = tf.train.shuffle_batch(
-      [cur_images, cur_labels],
-      batch_size=batch_size,
-      capacity=model_config.capacity,
-      num_threads=model_config.num_threads,
-      min_after_dequeue=model_config.min_after_dequeue)
-  return batch_images, batch_labels
+    if use_path:
+      cur_images, cur_labels, cur_paths = read_from_tfrecord(queue, model_config.image_shape, use_path=True)
+      batch_images, batch_labels, batch_paths = tf.train.shuffle_batch(
+        [cur_images, cur_labels, cur_paths],
+        batch_size=batch_size,
+        capacity=model_config.capacity,
+        num_threads=model_config.num_threads,
+        min_after_dequeue=model_config.min_after_dequeue)
+      return batch_images, batch_labels, batch_paths
+    else:
+      cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
+      batch_images, batch_labels = tf.train.shuffle_batch(
+        [cur_images, cur_labels],
+        batch_size=batch_size,
+        capacity=model_config.capacity,
+        num_threads=model_config.num_threads,
+        min_after_dequeue=model_config.min_after_dequeue)
+      return batch_images, batch_labels
 
 
-def get_batch(filename, batch_size, model_config, name='batch'):
+def get_batch(filename, batch_size, model_config, name='batch', use_path=False):
   with tf.name_scope(name=name):
     queue = tf.train.string_input_producer([filename])
-    cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
-    batch_images, batch_labels = tf.train.batch(
-      [cur_images, cur_labels],
-      batch_size=batch_size,
-      capacity=model_config.capacity,
-      num_threads=1,
-      allow_smaller_final_batch=True)
-  return batch_images, batch_labels
+    if use_path:
+      cur_images, cur_labels, cur_paths = read_from_tfrecord(queue, model_config.image_shape, use_path=True)
+      batch_images, batch_labels, batch_paths = tf.train.batch(
+        [cur_images, cur_labels, cur_paths],
+        batch_size=batch_size,
+        capacity=model_config.capacity,
+        num_threads=1,
+        allow_smaller_final_batch=True)
+      return batch_images, batch_labels, batch_paths
+    else:
+      cur_images, cur_labels = read_from_tfrecord(queue, model_config.image_shape)
+      batch_images, batch_labels = tf.train.batch(
+        [cur_images, cur_labels],
+        batch_size=batch_size,
+        capacity=model_config.capacity,
+        num_threads=1,
+        allow_smaller_final_batch=True)
+    return batch_images, batch_labels
