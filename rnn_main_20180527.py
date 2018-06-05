@@ -15,8 +15,8 @@ import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
-from dataset.tfrecord import get_batch, get_shuffle_batch
-from nets.model import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
+from dataset.tfrecord_rnn import get_batch, get_shuffle_batch
+from nets.model_20180527 import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
 from utils import config
 from utils.log import Logger
 from utils.plot import plot
@@ -30,39 +30,42 @@ cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 conf = config.RNNConfig(
   model_name='bidirectional_lstm',
   input_keep_prob=1,
-  output_keep_prob=0.5,
+  output_keep_prob=0.4,
   lr=0.005,
-  optimizer=tf.train.GradientDescentOptimizer,
+  optimizer=tf.train.AdadeltaOptimizer,
   is_training=True,
-  num_layers=2,
+  num_layers=4,
   num_steps=95,
-  hidden_size=192,
+  hidden_size=512,
   num_classes=3,
   image_shape=(95, 160),
-  batch_size=8,
+  batch_size=2,
   max_epoch=1000,
   capacity=100,
   num_threads=4,
   min_after_dequeue=5,
-  train_data_path='tfdata/rnn_tfdata_undersampling_20180508/epilepsy_rnn_train.tfrecords',
-  test_data_path='tfdata/rnn_tfdata_undersampling_20180508/epilepsy_rnn_test.tfrecords', )
+  train_data_path='tfdata/2018-05-28 11:30:53/epilepsy_rnn_train.tfrecords',
+  test_data_path='tfdata/2018-05-28 11:30:53/epilepsy_rnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
 
 # get train batch data
-train_batch_images, train_batch_labels, _ = get_shuffle_batch(conf.train_data_path, conf.batch_size, conf,
-                                                              name='train_shuffle_batch', use_path=True)
+train_batch_images, train_batch_coefficients, train_batch_labels, _ = get_shuffle_batch(conf.train_data_path,
+                                                                                        conf.batch_size, conf,
+                                                                                        name='train_shuffle_batch')
 # estimate 'train' progress batch data
-estimate_train_images, estimate_train_labels, _ = get_batch(conf.train_data_path, conf.batch_size, conf,
-                                                            name='estimate_train_batch', use_path=True)
+estimate_train_images, estimate_train_coefficients, estimate_train_labels, _ = get_batch(conf.train_data_path,
+                                                                                         conf.batch_size, conf,
+                                                                                         name='estimate_train_batch')
 # estimate 'test' progress batch data
-estimate_test_images, estimate_test_labels, _ = get_batch(conf.test_data_path, conf.batch_size, conf,
-                                                          name='estimate_test_batch', use_path=True)
+estimate_test_images, estimate_test_coefficients, estimate_test_labels, _ = get_batch(conf.test_data_path,
+                                                                                      conf.batch_size, conf,
+                                                                                      name='estimate_test_batch')
 
 # set train
-conf.train_data_length = 343
-conf.test_data_length = 88
+conf.train_data_length = 345
+conf.test_data_length = 86
 
 if conf.model_name == 'unidirectional_lstm':
   model = EpilepsyUnidirectionalLSTM(config=conf)
@@ -101,19 +104,23 @@ with tf.Session(config=config_gpu) as sess:
   for epoch_idx in range(conf.max_epoch):
     # train op
     for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
-      cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
-      _, lr = sess.run([model.train_op, model.learning_rate], feed_dict={model.inputs: cur_train_image,
-                                                                         model.labels: cur_train_label})
-    logger.info('[LR] Epoch: {}, LR:{:.10f}'.format(epoch_idx, lr))
+      cur_train_image, cur_train_coefficient, cur_train_label = sess.run(
+        [train_batch_images, train_batch_coefficients, train_batch_labels])
+      _ = sess.run([model.train_op],
+                   feed_dict={model.inputs: cur_train_image,
+                              model.coefficients: cur_train_coefficient,
+                              model.labels: cur_train_label})
     # estimate 'train' progress
     train_acc_array = []
     train_loss_array = []
     train_confusion_matrix = np.zeros([3, 3], dtype=int)
     for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
-      cur_train_image, cur_train_label = sess.run([estimate_train_images, estimate_train_labels])
+      cur_train_image, cur_train_coefficient, cur_train_label = sess.run(
+        [estimate_train_images, estimate_train_coefficients, estimate_train_labels])
       cur_train_acc, cur_train_loss, cur_train_confusion_matrix = sess.run(
         [model.test_accuracy, model.test_loss, model.test_confusion_matrix],
         feed_dict={model.inputs: cur_train_image,
+                   model.coefficients: cur_train_coefficient,
                    model.labels: cur_train_label})
       train_acc_array.append(cur_train_acc)
       train_loss_array.append(cur_train_loss)
@@ -139,10 +146,12 @@ with tf.Session(config=config_gpu) as sess:
     test_loss_array = []
     test_confusion_matrix = np.zeros([3, 3], dtype=int)
     for batch_idx in tqdm(range(int(conf.test_data_length / conf.batch_size))):
-      cur_test_image, cur_test_label = sess.run([estimate_test_images, estimate_test_labels])
+      cur_test_image, cur_test_coefficient, cur_test_label = sess.run(
+        [estimate_test_images, estimate_test_coefficients, estimate_test_labels])
       cur_test_loss, cur_test_acc, cur_test_confusion_matrix = sess.run(
         [model.test_loss, model.test_accuracy, model.test_confusion_matrix],
         feed_dict={model.inputs: cur_test_image,
+                   model.coefficients: cur_test_coefficient,
                    model.labels: cur_test_label})
       test_acc_array.append(cur_test_acc)
       test_loss_array.append(cur_test_loss)

@@ -45,8 +45,8 @@ class CNNConfig(object):
     self.lr = lr
     self.optimizer = optimizer
     self.num_classes = num_classes
-    self.train_batch_size = train_batch_size,
-    self.test_batch_size = test_batch_size,
+    self.train_batch_size = train_batch_size
+    self.test_batch_size = test_batch_size
     self.batch_norm_decay = batch_norm_decay
     self.image_shape = image_shape
     self.plot_batch = plot_batch

@@ -8,10 +8,9 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 
 import tensorflow as tf
 from tensorflow.contrib import slim
-from tensorflow.python.ops.losses.losses_impl import Reduction
 
 from nets.shadow_cnn import epilepsy_3d_cnn
-from .bidirectional_lstm import bidirectional_lstm
+from .bidirectional_lstm_20180527 import bidirectional_lstm
 from .inception_3d_utils import inception_3d_arg_scope
 from .inception_3d_v2 import inception_3d_v2
 from .inception_3d_v3 import inception_3d_v3
@@ -981,12 +980,15 @@ class EpilepsyBidirectionalLSTM(object):
   def _create_placeholder(self):
     with tf.name_scope('placeholder'):
       self._inputs = tf.placeholder(dtype=tf.float32, shape=self._input_shape, name="inputs")
+      self._coefficients = tf.placeholder(dtype=tf.float32, shape=(self._config.batch_size, 160, 160, 1),
+                                          name="coefficients")
       self._labels = tf.placeholder(dtype=tf.float32, shape=self._output_shape, name="labels")
 
   def _create_train_model(self):
     with tf.name_scope('train_model'):
       train_logits, train_end_points = bidirectional_lstm(
         self._inputs,
+        self._coefficients,
         batch_size=self._config.batch_size,
         num_steps=self._config.num_steps,
         num_layers=self._config.num_layers,
@@ -1004,16 +1006,15 @@ class EpilepsyBidirectionalLSTM(object):
         train_classes = tf.argmax(input=train_predictions, axis=1)
       with tf.name_scope('losses'):
         # set loss
-        train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits,
-                                                     reduction=Reduction.SUM_OVER_BATCH_SIZE)
+        train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # train_loss = WeightedCrossEntropyLoss(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        global_step = tf.train.get_or_create_global_step()
-        learning_rate = tf.train.exponential_decay(self._config.lr,
-                                                   global_step=global_step,
-                                                   decay_steps=200, decay_rate=0.96)
-        learning_rate = tf.maximum(learning_rate, 1e-6)
-        optimizer = self._config.optimizer(learning_rate=learning_rate)
+        # global_step = tf.train.get_or_create_global_step()
+        # learning_rate = tf.train.exponential_decay(self._config.lr,
+        #                                            global_step=global_step,
+        #                                            decay_steps=200, decay_rate=0.96)
+        # learning_rate = tf.maximum(learning_rate, 1e-6)
+        optimizer = self._config.optimizer(learning_rate=self._config.lr)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
       with tf.name_scope('metrics'):
@@ -1023,7 +1024,7 @@ class EpilepsyBidirectionalLSTM(object):
           name='train_accuracy')
         train_confusion_matrix = tf.confusion_matrix(self._labels, train_classes,
                                                      num_classes=self._config.num_classes)
-      self._learning_rate = learning_rate
+      # self._learning_rate = learning_rate
       self._train_loss = train_loss
       self._train_op = train_op
       self._train_accuracy = train_accuracy
@@ -1036,6 +1037,7 @@ class EpilepsyBidirectionalLSTM(object):
     with tf.name_scope('test_model'):
       test_logits, test_end_points = bidirectional_lstm(
         self._inputs,
+        self._coefficients,
         batch_size=self._config.batch_size,
         num_steps=self._config.num_steps,
         num_layers=self._config.num_layers,
@@ -1076,12 +1078,16 @@ class EpilepsyBidirectionalLSTM(object):
     return self._inputs
 
   @property
+  def coefficients(self):
+    return self._coefficients
+
+  @property
   def labels(self):
     return self._labels
 
-  @property
-  def learning_rate(self):
-    return self._learning_rate
+  # @property
+  # def learning_rate(self):
+  #   return self._learning_rate
 
   @property
   def train_loss(self):
