@@ -16,6 +16,7 @@ def coefficient_net(inputs,
                     final_endpoint='AvgPool_6a_5x5',
                     min_depth=16,
                     depth_multiplier=1.0,
+                    keep_prob=0.3,
                     use_separable_conv=True,
                     is_training=True,
                     data_format='NHWC',
@@ -434,7 +435,7 @@ def coefficient_net(inputs,
       with tf.variable_scope(end_point):
         net = slim.avg_pool2d(net, [5, 5], padding='VALID', scope=end_point)
         net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
-        net = slim.dropout(net, keep_prob=0.3, is_training=is_training)
+        net = slim.dropout(net, keep_prob=keep_prob, is_training=is_training)
       end_points[end_point] = net
       if end_point == final_endpoint: return net, end_points
     raise ValueError('Unknown final endpoint %s' % final_endpoint)

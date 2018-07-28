@@ -16,7 +16,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from dataset.tfrecord_rnn import get_batch, get_shuffle_batch
-from nets.model_20180527 import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
+from nets.model_with_inception import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
 from utils import config
 from utils.log import Logger
 from utils.plot import plot
@@ -34,7 +34,7 @@ conf = config.RNNConfig(
   lr=0.005,
   optimizer=tf.train.GradientDescentOptimizer,
   is_training=True,
-  num_layers=5,
+  num_layers=1,
   num_steps=95,
   hidden_size=512,
   num_classes=3,
@@ -134,12 +134,7 @@ with tf.Session(config=config_gpu) as sess:
         np.average(train_loss_array),
         np.average(train_acc_array)))
     epoch_train_acc.append(np.average(train_acc_array))
-    # epoch_train_sens.append(train_metrics.sensibility(1))
-    # epoch_train_spec.append(train_metrics.specificity(1))
-    # logger.info('[Train] Epoch:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
-    #   epoch_idx,
-    #   np.average(train_loss_array),
-    #   np.average(train_acc_array)))
+
 
     # estimate 'test' progress
     test_acc_array = []
@@ -174,16 +169,12 @@ with tf.Session(config=config_gpu) as sess:
         T11, T11 + F12 + F13, F12, F13, T22, F21 + T22 + F23, F21, F23, T33, F31 + F32 + T33, F31, F32,
         avg_test_loss,
         avg_test_acc))
-    # logger.info('[Test] Epoch:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
-    #   epoch_idx,
-    #   avg_test_loss,
-    #   avg_test_acc))
+
     logger.info('[Info] The max test accuracy is {:.6f} at epoch {}'.format(
       max_test_acc,
       max_test_acc_epoch))
     epoch_test_acc.append(np.average(test_acc_array))
-    # epoch_test_sens.append(test_metrics.sensibility(1))
-    # epoch_test_spec.append(test_metrics.specificity(1))
+
   print('Model {} final epoch has been finished!'.format(conf.model_name))
   coord.request_stop()
   coord.join(threads)
@@ -192,8 +183,3 @@ with tf.Session(config=config_gpu) as sess:
 print('Starting plotting.')
 plot(epoch_train_acc, epoch_test_acc, conf.save_model_path + 'acc.png', title=conf.model_name, xlabel='epoch',
      ylabel='Accuracy')
-# plot(epoch_train_sens, epoch_test_sens, conf.save_model_path + 'sens.png', title=conf.model_name, xlabel='epoch',
-#      ylabel='Sensibility')
-# plot(epoch_train_spec, epoch_test_spec, conf.save_model_path + 'spec.png', title=conf.model_name, xlabel='epoch',
-#      ylabel='Specificity')
-# print('Ending plotting.')
