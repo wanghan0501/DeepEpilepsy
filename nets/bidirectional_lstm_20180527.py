@@ -100,7 +100,7 @@ def bidirectional_lstm(inputs,
       if classify_other_steps:
         steps_logits = list()
         steps_predictions = list()
-        coefficient, _ = coefficient_net(coefficients)
+        coefficient, _ = coefficient_net(coefficients, is_training=is_training)
         for step in range(num_steps):
           all = tf.concat([outputs[step], coefficient], 1)
           logits = slim.fully_connected(all, num_classes, activation_fn=None, scope='Logits',
@@ -116,7 +116,7 @@ def bidirectional_lstm(inputs,
         # [batch_size, hidden_size * 2]
         final_output = outputs[-1]
         # [batch_size, 1024]
-        coefficient, _ = coefficient_net(coefficients)
+        coefficient, _ = coefficient_net(coefficients, is_training=is_training)
         all = tf.concat([final_output, coefficient], 1)
         logits = slim.fully_connected(all, num_classes, activation_fn=None, scope='Logits')
         end_points['Logits'] = logits
