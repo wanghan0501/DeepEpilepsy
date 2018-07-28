@@ -59,7 +59,8 @@ class EpilepsyUnidirectionalLSTM(object):
         global_step = tf.train.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(self._config.lr,
                                                    global_step=global_step,
-                                                   decay_steps=500, decay_rate=0.96)
+                                                   decay_steps=self._config.decay_steps,
+                                                   decay_rate=self._config.decay_rate)
         learning_rate = tf.maximum(learning_rate, 1e-6)
         optimizer = self._config.optimizer(learning_rate=learning_rate)
         # set train_op
@@ -230,7 +231,8 @@ class EpilepsyBidirectionalLSTM(object):
         global_step = tf.train.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(self._config.lr,
                                                    global_step=global_step,
-                                                   decay_steps=500, decay_rate=0.96)
+                                                   decay_steps=self._config.decay_steps,
+                                                   decay_rate=self._config.decay_rate)
         learning_rate = tf.maximum(learning_rate, 1e-6)
         optimizer = self._config.optimizer(learning_rate=learning_rate)
         # set train_op

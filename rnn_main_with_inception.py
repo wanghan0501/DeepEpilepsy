@@ -9,6 +9,7 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 """
 
 import os
+import re
 from datetime import datetime
 
 import numpy as np
@@ -19,7 +20,20 @@ from dataset.tfrecord_rnn import get_batch, get_shuffle_batch
 from nets.model_with_inception import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
 from utils import config
 from utils.log import Logger
-from utils.plot import plot
+
+
+def varlist_restore():
+  restore = {}
+  pattern = re.compile(r'.*(InceptionV2/Mixed).*')
+
+  for var in tf.trainable_variables():
+    var_name = var.name
+    res = pattern.match(var_name)
+    if res:
+      restore[var_name[25:-2]] = var
+
+  return restore
+
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 config_gpu = tf.ConfigProto()
@@ -31,10 +45,12 @@ conf = config.RNNConfig(
   model_name='bidirectional_lstm',
   input_keep_prob=1,
   output_keep_prob=0.3,
-  lr=0.0005,
+  lr=0.001,
   optimizer=tf.train.GradientDescentOptimizer,
+  decay_steps=500,
+  decay_rate=0.98,
   is_training=True,
-  num_layers=3,
+  num_layers=1,
   num_steps=95,
   hidden_size=512,
   num_classes=3,
@@ -71,8 +87,6 @@ if conf.model_name == 'unidirectional_lstm':
   model = EpilepsyUnidirectionalLSTM(config=conf)
 elif conf.model_name == 'bidirectional_lstm':
   model = EpilepsyBidirectionalLSTM(config=conf)
-else:
-  model = EpilepsyUnidirectionalLSTM(config=conf)
 
 logger.info('Model construction completed.')
 
@@ -84,9 +98,8 @@ if not os.path.exists(conf.save_model_path):
   os.mkdir(conf.save_model_path)
 logger.info(str(conf))
 
+
 epoch_train_acc, epoch_test_acc = [], []
-epoch_train_sens, epoch_test_sens = [], []
-epoch_train_spec, epoch_test_spec = [], []
 with tf.Session(config=config_gpu) as sess:
   init_op = tf.group(tf.global_variables_initializer(),
                      tf.local_variables_initializer())
@@ -95,6 +108,11 @@ with tf.Session(config=config_gpu) as sess:
   if conf.use_tensorboard:
     writer = tf.summary.FileWriter(conf.tensorboard_path)
     writer.add_graph(sess.graph)
+
+  # CNN loads pretrained model
+  restore = tf.train.Saver(varlist_restore())
+  restore.restore(sess, 'pretrained_models/inception_v2.ckpt')
+  logger.info("InceptionV3 had been restored.")
 
   saver = tf.train.Saver()
   coord = tf.train.Coordinator()
@@ -178,7 +196,3 @@ with tf.Session(config=config_gpu) as sess:
   coord.request_stop()
   coord.join(threads)
 
-# plot
-print('Starting plotting.')
-plot(epoch_train_acc, epoch_test_acc, conf.save_model_path + 'acc.png', title=conf.model_name, xlabel='epoch',
-     ylabel='Accuracy')

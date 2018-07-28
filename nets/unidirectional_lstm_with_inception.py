@@ -10,6 +10,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
 from nets.coefficient_net import coefficient_net
+from nets.inception_utils import inception_arg_scope
 from .lstm_utils import lstm_cell
 
 
@@ -75,7 +76,8 @@ def unidirectional_lstm(inputs,
       if classify_other_steps:
         steps_logits = list()
         steps_predictions = list()
-        coefficient, _ = coefficient_net(coefficients, keep_prob=output_keep_prob, is_training=is_training)
+        with slim.arg_scope(inception_arg_scope(batch_norm_decay=0.99)):
+          coefficient, _ = coefficient_net(coefficients, keep_prob=output_keep_prob, is_training=is_training)
         for step in outputs:
           all = tf.concat([outputs[step], coefficient], 1)
           logits = slim.fully_connected(all, num_classes, activation_fn=None, scope='Logits', reuse=tf.AUTO_REUSE)
@@ -88,7 +90,8 @@ def unidirectional_lstm(inputs,
         end_points['StepsPredictions'] = steps_predictions
       else:
         final_output = outputs[-1]
-        coefficient, _ = coefficient_net(coefficients, keep_prob=output_keep_prob, is_training=is_training)
+        with slim.arg_scope(inception_arg_scope(batch_norm_decay=0.99)):
+          coefficient, _ = coefficient_net(coefficients, keep_prob=output_keep_prob, is_training=is_training)
         all = tf.concat([final_output, coefficient], 1)
         logits = slim.fully_connected(all, num_classes, activation_fn=None, scope='Logits')
         end_points['Logits'] = logits
