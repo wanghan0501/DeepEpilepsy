@@ -50,7 +50,7 @@ conf = config.RNNConfig(
   decay_steps=500,
   decay_rate=0.98,
   is_training=True,
-  num_layers=1,
+  num_layers=5,
   num_steps=95,
   hidden_size=512,
   num_classes=3,
@@ -112,7 +112,7 @@ with tf.Session(config=config_gpu) as sess:
   # CNN loads pretrained model
   restore = tf.train.Saver(varlist_restore())
   restore.restore(sess, 'pretrained_models/inception_v2.ckpt')
-  logger.info("InceptionV3 had been restored.")
+  logger.info("Inception V2 had been restored.")
 
   saver = tf.train.Saver()
   coord = tf.train.Coordinator()
