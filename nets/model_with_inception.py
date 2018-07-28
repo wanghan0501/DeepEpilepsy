@@ -56,7 +56,12 @@ class EpilepsyUnidirectionalLSTM(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = self._config.optimizer(learning_rate=self._config.lr)
+        global_step = tf.train.get_or_create_global_step()
+        learning_rate = tf.train.exponential_decay(self._config.lr,
+                                                   global_step=global_step,
+                                                   decay_steps=500, decay_rate=0.96)
+        learning_rate = tf.maximum(learning_rate, 1e-6)
+        optimizer = self._config.optimizer(learning_rate=learning_rate)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
       with tf.name_scope('metrics'):
@@ -68,6 +73,7 @@ class EpilepsyUnidirectionalLSTM(object):
                                                      num_classes=self._config.num_classes)
       self._train_loss = train_loss
       self._train_op = train_op
+      self._learning_rate = learning_rate
       self._train_accuracy = train_accuracy
       self._train_classes = train_classes
       self._train_logits = train_logits
@@ -124,6 +130,10 @@ class EpilepsyUnidirectionalLSTM(object):
   @property
   def train_loss(self):
     return self._train_loss
+
+  @property
+  def learning_rate(self):
+    return self._learning_rate
 
   @property
   def train_op(self):
@@ -220,7 +230,7 @@ class EpilepsyBidirectionalLSTM(object):
         global_step = tf.train.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(self._config.lr,
                                                    global_step=global_step,
-                                                   decay_steps=800, decay_rate=0.96)
+                                                   decay_steps=500, decay_rate=0.96)
         learning_rate = tf.maximum(learning_rate, 1e-6)
         optimizer = self._config.optimizer(learning_rate=learning_rate)
         # set train_op
@@ -232,7 +242,7 @@ class EpilepsyBidirectionalLSTM(object):
           name='train_accuracy')
         train_confusion_matrix = tf.confusion_matrix(self._labels, train_classes,
                                                      num_classes=self._config.num_classes)
-      # self._learning_rate = learning_rate
+      self._learning_rate = learning_rate
       self._train_loss = train_loss
       self._train_op = train_op
       self._train_accuracy = train_accuracy
@@ -292,9 +302,9 @@ class EpilepsyBidirectionalLSTM(object):
   def labels(self):
     return self._labels
 
-  # @property
-  # def learning_rate(self):
-  #   return self._learning_rate
+  @property
+  def learning_rate(self):
+    return self._learning_rate
 
   @property
   def train_loss(self):

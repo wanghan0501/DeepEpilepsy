@@ -31,10 +31,10 @@ conf = config.RNNConfig(
   model_name='bidirectional_lstm',
   input_keep_prob=1,
   output_keep_prob=0.3,
-  lr=0.005,
+  lr=0.0005,
   optimizer=tf.train.GradientDescentOptimizer,
   is_training=True,
-  num_layers=1,
+  num_layers=3,
   num_steps=95,
   hidden_size=512,
   num_classes=3,
@@ -106,10 +106,12 @@ with tf.Session(config=config_gpu) as sess:
     for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
       cur_train_image, cur_train_coefficient, cur_train_label = sess.run(
         [train_batch_images, train_batch_coefficients, train_batch_labels])
-      _ = sess.run([model.train_op],
-                   feed_dict={model.inputs: cur_train_image,
-                              model.coefficients: cur_train_coefficient,
-                              model.labels: cur_train_label})
+      _, lr = sess.run([model.train_op, model.learning_rate],
+                       feed_dict={model.inputs: cur_train_image,
+                                  model.coefficients: cur_train_coefficient,
+                                  model.labels: cur_train_label})
+
+    logger.info("[LR]: Epochs: {}, lr: {}".format(epoch_idx, lr))
     # estimate 'train' progress
     train_acc_array = []
     train_loss_array = []
@@ -126,7 +128,6 @@ with tf.Session(config=config_gpu) as sess:
       train_loss_array.append(cur_train_loss)
       train_confusion_matrix += cur_train_confusion_matrix
     [[T11, F12, F13], [F21, T22, F23], [F31, F32, T33]] = train_confusion_matrix
-    # train_metrics = Confusion(train_confusion_matrix)
     logger.info(
       '[Train] Epoch:{}, T11:{}/{}, F12:{}, F13:{}, T22:{}/{}, F21:{}, F23：{}, T33:{}/{}, F31：{}, F32：{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
         epoch_idx,
@@ -134,7 +135,6 @@ with tf.Session(config=config_gpu) as sess:
         np.average(train_loss_array),
         np.average(train_acc_array)))
     epoch_train_acc.append(np.average(train_acc_array))
-
 
     # estimate 'test' progress
     test_acc_array = []
@@ -152,7 +152,6 @@ with tf.Session(config=config_gpu) as sess:
       test_loss_array.append(cur_test_loss)
       test_confusion_matrix += cur_test_confusion_matrix
       [[T11, F12, F13], [F21, T22, F23], [F31, F32, T33]] = test_confusion_matrix
-    # test_metrics = Confusion(test_confusion_matrix)
     # for the whole 'test' progress
     avg_test_acc = np.average(test_acc_array)
     avg_test_loss = np.average(test_loss_array)
