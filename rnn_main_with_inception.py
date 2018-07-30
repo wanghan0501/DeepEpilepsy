@@ -45,7 +45,7 @@ conf = config.RNNConfig(
   model_name='bidirectional_lstm',
   input_keep_prob=1,
   output_keep_prob=0.3,
-  lr=0.005,
+  lr=0.001,
   optimizer=tf.train.GradientDescentOptimizer,
   decay_steps=800,
   decay_rate=0.96,
@@ -60,8 +60,8 @@ conf = config.RNNConfig(
   capacity=100,
   num_threads=4,
   min_after_dequeue=5,
-  train_data_path='tfdata/2018-05-28 11:30:53/epilepsy_rnn_train.tfrecords',
-  test_data_path='tfdata/2018-05-28 11:30:53/epilepsy_rnn_test.tfrecords', )
+  train_data_path='tfdata/2018-07-30 12:26:53/epilepsy_rnn_train.tfrecords',
+  test_data_path='tfdata/2018-07-30 12:26:53/epilepsy_rnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
@@ -98,7 +98,6 @@ if not os.path.exists(conf.save_model_path):
   os.mkdir(conf.save_model_path)
 logger.info(str(conf))
 
-
 epoch_train_acc, epoch_test_acc = [], []
 with tf.Session(config=config_gpu) as sess:
   init_op = tf.group(tf.global_variables_initializer(),
@@ -110,9 +109,9 @@ with tf.Session(config=config_gpu) as sess:
     writer.add_graph(sess.graph)
 
   # CNN loads pretrained model
-  restore = tf.train.Saver(varlist_restore())
-  restore.restore(sess, 'pretrained_models/inception_v2.ckpt')
-  logger.info("Inception V2 had been restored.")
+  # restore = tf.train.Saver(varlist_restore())
+  # restore.restore(sess, 'pretrained_models/inception_v2.ckpt')
+  # logger.info("Inception V2 had been restored.")
 
   saver = tf.train.Saver()
   coord = tf.train.Coordinator()
@@ -195,4 +194,3 @@ with tf.Session(config=config_gpu) as sess:
   print('Model {} final epoch has been finished!'.format(conf.model_name))
   coord.request_stop()
   coord.join(threads)
-
