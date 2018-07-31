@@ -57,7 +57,7 @@ def alexnet_v2(inputs,
                dropout_keep_prob=0.5,
                spatial_squeeze=True,
                scope='alexnet_v2',
-               global_pool=True):
+               global_pool=False):
   """AlexNet version 2.
 
   Described in: http://arxiv.org/pdf/1404.5997v2.pdf
@@ -111,7 +111,7 @@ def alexnet_v2(inputs,
       with slim.arg_scope([slim.conv2d],
                           weights_initializer=trunc_normal(0.005),
                           biases_initializer=tf.constant_initializer(0.1)):
-        net = slim.conv2d(net, 4096, [5, 5], padding='VALID',
+        net = slim.conv2d(net, 4096, [3, 3], padding='VALID',
                           scope='fc6')
         net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                            scope='dropout6')

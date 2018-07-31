@@ -264,10 +264,15 @@ class EpilepsyBidirectionalLSTM(object):
         hidden_size=self._config.hidden_size,
         num_classes=self._config.num_classes,
         is_training=False,
+        classify_other_steps=self._config.classify_other_steps,
         input_keep_prob=1,
         output_keep_prob=1,
         reuse=tf.AUTO_REUSE)
       with tf.name_scope('predictions'):
+        if self._config.classify_other_steps:
+          test_steps_logits = test_end_points['StepsLogits']
+          test_step_predictions = test_end_points['StepsPredictions']
+
         test_predictions = test_end_points['Predictions']
         test_one_hot_labels = tf.one_hot(indices=tf.cast(self._labels, tf.int32),
                                          depth=self._config.num_classes,
@@ -290,6 +295,10 @@ class EpilepsyBidirectionalLSTM(object):
       self._test_classes = test_classes
       self._test_logits = test_logits
       self._test_predictions = test_predictions
+      if self._config.classify_other_steps:
+        self._test_steps_logits = test_steps_logits
+        self._test_step_predictions = test_step_predictions
+        self._test_feature_map = test_end_points['FeatureMaps']
       self._test_confusion_matrix = test_confusion_matrix
 
   @property
@@ -355,6 +364,18 @@ class EpilepsyBidirectionalLSTM(object):
   @property
   def test_predictions(self):
     return self._test_predictions
+
+  @property
+  def test_steps_logits(self):
+    return self._test_steps_logits
+
+  @property
+  def test_step_predictions(self):
+    return self._test_step_predictions
+
+  @property
+  def test_feature_map(self):
+    return self._test_feature_map
 
   @property
   def test_confusion_matrix(self):

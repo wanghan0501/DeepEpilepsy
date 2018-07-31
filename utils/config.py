@@ -140,6 +140,7 @@ class RNNConfig(object):
                optimizer=tf.train.RMSPropOptimizer,
                decay_steps=1000,
                decay_rate=0.96,
+               classify_other_steps=False,
                use_tensorboard=False,
                tensorboard_path=None,
                train_data_path=None,
@@ -169,6 +170,7 @@ class RNNConfig(object):
     self.optimizer = optimizer
     self.decay_steps = decay_steps
     self.decay_rate = decay_rate
+    self.classify_other_steps = classify_other_steps
     self.use_tensorboard = use_tensorboard
     self.tensorboard_path = tensorboard_path
     self.train_data_path = train_data_path
@@ -188,7 +190,8 @@ model_name = {}
 is_training = {}
 optimizer = {}
 decay_steps = {}
-decay_rate = {}     
+decay_rate = {}   
+classify_other_steps = {}  
 max_epoch = {}
 num_gpu = {}
 num_layers = {}
@@ -219,6 +222,7 @@ min_after_dequeue = {}
       self.optimizer,
       self.decay_steps,
       self.decay_rate,
+      self.classify_other_steps,
       self.max_epoch,
       self.num_gpu,
       self.num_layers,

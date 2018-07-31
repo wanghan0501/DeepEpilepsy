@@ -100,7 +100,9 @@ def bidirectional_lstm(inputs,
       if classify_other_steps:
         steps_logits = list()
         steps_predictions = list()
-        coefficient, _ = coefficient_net(coefficients, keep_prob=output_keep_prob, is_training=is_training)
+        coefficient, coefficient_end_points = coefficient_net(coefficients, keep_prob=output_keep_prob,
+                                                              is_training=is_training)
+        # coefficient, _ = alexnet_v2(coefficients, dropout_keep_prob=output_keep_prob, is_training=is_training)
         for step in range(num_steps):
           all = tf.concat([outputs[step], coefficient], 1)
           logits = slim.fully_connected(all, num_classes, activation_fn=None, scope='Logits',
@@ -110,15 +112,19 @@ def bidirectional_lstm(inputs,
           steps_predictions.append(predictions)
           end_points['Logits'] = logits
           end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
+        end_points['FeatureMaps'] = coefficient_end_points['Mixed_5c']
         end_points['StepsLogits'] = steps_logits
         end_points['StepsPredictions'] = steps_predictions
       else:
         # [batch_size, hidden_size * 2]
         final_output = outputs[-1]
         # [batch_size, 1024]
-        coefficient, _ = coefficient_net(coefficients, keep_prob=output_keep_prob, is_training=is_training)
+        coefficient, coefficient_end_points = coefficient_net(coefficients, keep_prob=output_keep_prob,
+                                                              is_training=is_training)
+        # coefficient, _ = alexnet_v2(coefficients, dropout_keep_prob=output_keep_prob, is_training=is_training)
         all = tf.concat([final_output, coefficient], 1)
         logits = slim.fully_connected(all, num_classes, activation_fn=None, scope='Logits')
+        end_points['FeatureMaps'] = coefficient_end_points['Mixed_5c']
         end_points['Logits'] = logits
         end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
     return logits, end_points
