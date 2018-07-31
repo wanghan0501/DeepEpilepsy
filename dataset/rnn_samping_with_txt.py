@@ -68,9 +68,9 @@ def sampling():
     TF_DIR + "epilepsy_rnn_train.tfrecords",
     datas=train_datas,
     labels=train_data['label'].tolist(),
-    img_shape=(190, 160),
+    img_shape=(95, 160),
     logger=logger,
-    use_avg=False)
+    use_avg=True)
 
   temp = test_data['name'].tolist()
   test_datas = []

@@ -15,7 +15,7 @@ import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
-from dataset.tfrecord import get_batch, get_shuffle_batch
+from dataset.tfrecord_rnn import get_batch, get_shuffle_batch
 from nets.model import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
 from utils import config
 from utils.log import Logger
@@ -27,7 +27,7 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
-  model_name='unidirectional_lstm',
+  model_name='bidirectional_lstm',
   input_keep_prob=1,
   output_keep_prob=0.5,
   lr=0.005,
@@ -45,8 +45,8 @@ conf = config.RNNConfig(
   capacity=100,
   num_threads=4,
   min_after_dequeue=5,
-  train_data_path='tfdata/rnn_tfdata/epilepsy_rnn_train.tfrecords',
-  test_data_path='tfdata/rnn_tfdata/epilepsy_rnn_test.tfrecords', )
+  train_data_path='tfdata/rnn_tfdata_undersampling/epilepsy_rnn_train.tfrecords',
+  test_data_path='tfdata/rnn_tfdata_undersampling/epilepsy_rnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()

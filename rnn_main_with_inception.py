@@ -42,7 +42,7 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
-  model_name='unidirectional_lstm',
+  model_name='unidirectional_lstm_with_inception',
   input_keep_prob=1,
   output_keep_prob=0.5,
   lr=0.005,
@@ -83,9 +83,9 @@ estimate_test_images, estimate_test_coefficients, estimate_test_labels, _ = get_
 conf.train_data_length = 345
 conf.test_data_length = 86
 
-if conf.model_name == 'unidirectional_lstm':
+if conf.model_name == 'unidirectional_lstm_with_inception':
   model = EpilepsyUnidirectionalLSTM(config=conf)
-elif conf.model_name == 'bidirectional_lstm':
+elif conf.model_name == 'bidirectional_lstm_with_inception':
   model = EpilepsyBidirectionalLSTM(config=conf)
 
 logger.info('Model construction completed.')
