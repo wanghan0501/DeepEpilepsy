@@ -133,6 +133,10 @@ class EpilepsyUnidirectionalLSTM(object):
     return self._inputs
 
   @property
+  def coefficients(self):
+    return self._coefficients
+
+  @property
   def labels(self):
     return self._labels
 

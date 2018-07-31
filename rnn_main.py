@@ -19,7 +19,6 @@ from dataset.tfrecord import get_batch, get_shuffle_batch
 from nets.model import EpilepsyBidirectionalLSTM, EpilepsyUnidirectionalLSTM
 from utils import config
 from utils.log import Logger
-from utils.plot import plot
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 config_gpu = tf.ConfigProto()
@@ -28,48 +27,51 @@ config_gpu.gpu_options.allow_growth = True
 cur_run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 conf = config.RNNConfig(
-  model_name='bidirectional_lstm',
+  model_name='unidirectional_lstm',
   input_keep_prob=1,
   output_keep_prob=0.5,
   lr=0.005,
   optimizer=tf.train.GradientDescentOptimizer,
+  decay_steps=800,
+  decay_rate=0.96,
   is_training=True,
-  num_layers=2,
+  num_layers=5,
   num_steps=95,
-  hidden_size=192,
+  hidden_size=512,
   num_classes=3,
   image_shape=(95, 160),
-  batch_size=8,
-  max_epoch=1000,
+  batch_size=1,
+  max_epoch=300,
   capacity=100,
   num_threads=4,
   min_after_dequeue=5,
-  train_data_path='tfdata/rnn_tfdata_undersampling_20180508/epilepsy_rnn_train.tfrecords',
-  test_data_path='tfdata/rnn_tfdata_undersampling_20180508/epilepsy_rnn_test.tfrecords', )
+  train_data_path='tfdata/rnn_tfdata/epilepsy_rnn_train.tfrecords',
+  test_data_path='tfdata/rnn_tfdata/epilepsy_rnn_test.tfrecords', )
 
 conf.logger_path = 'logs/{}_{}.log'.format(conf.model_name, cur_run_timestamp)
 logger = Logger(filename=conf.logger_path).get_logger()
 
 # get train batch data
-train_batch_images, train_batch_labels, _ = get_shuffle_batch(conf.train_data_path, conf.batch_size, conf,
-                                                              name='train_shuffle_batch', use_path=True)
+train_batch_images, _, train_batch_labels, _ = get_shuffle_batch(conf.train_data_path,
+                                                                 conf.batch_size, conf,
+                                                                 name='train_shuffle_batch')
 # estimate 'train' progress batch data
-estimate_train_images, estimate_train_labels, _ = get_batch(conf.train_data_path, conf.batch_size, conf,
-                                                            name='estimate_train_batch', use_path=True)
+estimate_train_images, _, estimate_train_labels, _ = get_batch(conf.train_data_path,
+                                                               conf.batch_size, conf,
+                                                               name='estimate_train_batch')
 # estimate 'test' progress batch data
-estimate_test_images, estimate_test_labels, _ = get_batch(conf.test_data_path, conf.batch_size, conf,
-                                                          name='estimate_test_batch', use_path=True)
+estimate_test_images, _, estimate_test_labels, _ = get_batch(conf.test_data_path,
+                                                             conf.batch_size, conf,
+                                                             name='estimate_test_batch')
 
 # set train
-conf.train_data_length = 343
-conf.test_data_length = 88
+conf.train_data_length = 345
+conf.test_data_length = 86
 
 if conf.model_name == 'unidirectional_lstm':
   model = EpilepsyUnidirectionalLSTM(config=conf)
 elif conf.model_name == 'bidirectional_lstm':
   model = EpilepsyBidirectionalLSTM(config=conf)
-else:
-  model = EpilepsyUnidirectionalLSTM(config=conf)
 
 logger.info('Model construction completed.')
 
@@ -81,9 +83,6 @@ if not os.path.exists(conf.save_model_path):
   os.mkdir(conf.save_model_path)
 logger.info(str(conf))
 
-epoch_train_acc, epoch_test_acc = [], []
-epoch_train_sens, epoch_test_sens = [], []
-epoch_train_spec, epoch_test_spec = [], []
 with tf.Session(config=config_gpu) as sess:
   init_op = tf.group(tf.global_variables_initializer(),
                      tf.local_variables_initializer())
@@ -102,9 +101,11 @@ with tf.Session(config=config_gpu) as sess:
     # train op
     for batch_idx in tqdm(range(int(conf.train_data_length / conf.batch_size))):
       cur_train_image, cur_train_label = sess.run([train_batch_images, train_batch_labels])
-      _, lr = sess.run([model.train_op, model.learning_rate], feed_dict={model.inputs: cur_train_image,
-                                                                         model.labels: cur_train_label})
-    logger.info('[LR] Epoch: {}, LR:{:.10f}'.format(epoch_idx, lr))
+      _, lr = sess.run([model.train_op, model.learning_rate],
+                       feed_dict={model.inputs: cur_train_image,
+                                  model.labels: cur_train_label})
+    logger.info("[LR]: Epochs: {}, lr: {}".format(epoch_idx, lr))
+
     # estimate 'train' progress
     train_acc_array = []
     train_loss_array = []
@@ -119,20 +120,13 @@ with tf.Session(config=config_gpu) as sess:
       train_loss_array.append(cur_train_loss)
       train_confusion_matrix += cur_train_confusion_matrix
     [[T11, F12, F13], [F21, T22, F23], [F31, F32, T33]] = train_confusion_matrix
-    # train_metrics = Confusion(train_confusion_matrix)
+
     logger.info(
       '[Train] Epoch:{}, T11:{}/{}, F12:{}, F13:{}, T22:{}/{}, F21:{}, F23：{}, T33:{}/{}, F31：{}, F32：{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
         epoch_idx,
         T11, T11 + F12 + F13, F12, F13, T22, F21 + T22 + F23, F21, F23, T33, F31 + F32 + T33, F31, F32,
         np.average(train_loss_array),
         np.average(train_acc_array)))
-    epoch_train_acc.append(np.average(train_acc_array))
-    # epoch_train_sens.append(train_metrics.sensibility(1))
-    # epoch_train_spec.append(train_metrics.specificity(1))
-    # logger.info('[Train] Epoch:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
-    #   epoch_idx,
-    #   np.average(train_loss_array),
-    #   np.average(train_acc_array)))
 
     # estimate 'test' progress
     test_acc_array = []
@@ -148,7 +142,7 @@ with tf.Session(config=config_gpu) as sess:
       test_loss_array.append(cur_test_loss)
       test_confusion_matrix += cur_test_confusion_matrix
       [[T11, F12, F13], [F21, T22, F23], [F31, F32, T33]] = test_confusion_matrix
-    # test_metrics = Confusion(test_confusion_matrix)
+
     # for the whole 'test' progress
     avg_test_acc = np.average(test_acc_array)
     avg_test_loss = np.average(test_loss_array)
@@ -165,26 +159,9 @@ with tf.Session(config=config_gpu) as sess:
         T11, T11 + F12 + F13, F12, F13, T22, F21 + T22 + F23, F21, F23, T33, F31 + F32 + T33, F31, F32,
         avg_test_loss,
         avg_test_acc))
-    # logger.info('[Test] Epoch:{}, Loss:{:.6f}, Accuracy:{:.6f}'.format(
-    #   epoch_idx,
-    #   avg_test_loss,
-    #   avg_test_acc))
     logger.info('[Info] The max test accuracy is {:.6f} at epoch {}'.format(
       max_test_acc,
       max_test_acc_epoch))
-    epoch_test_acc.append(np.average(test_acc_array))
-    # epoch_test_sens.append(test_metrics.sensibility(1))
-    # epoch_test_spec.append(test_metrics.specificity(1))
   print('Model {} final epoch has been finished!'.format(conf.model_name))
   coord.request_stop()
   coord.join(threads)
-
-# plot
-print('Starting plotting.')
-plot(epoch_train_acc, epoch_test_acc, conf.save_model_path + 'acc.png', title=conf.model_name, xlabel='epoch',
-     ylabel='Accuracy')
-# plot(epoch_train_sens, epoch_test_sens, conf.save_model_path + 'sens.png', title=conf.model_name, xlabel='epoch',
-#      ylabel='Sensibility')
-# plot(epoch_train_spec, epoch_test_spec, conf.save_model_path + 'spec.png', title=conf.model_name, xlabel='epoch',
-#      ylabel='Specificity')
-# print('Ending plotting.')

@@ -8,7 +8,6 @@ Copyright © 2017 Wang Han. SCU. All Rights Reserved.
 
 import tensorflow as tf
 from tensorflow.contrib import slim
-from tensorflow.python.ops.losses.losses_impl import Reduction
 
 from nets.shadow_cnn import epilepsy_3d_cnn
 from .bidirectional_lstm import bidirectional_lstm
@@ -849,7 +848,13 @@ class EpilepsyUnidirectionalLSTM(object):
         # set loss
         train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
-        optimizer = self._config.optimizer(learning_rate=self._config.lr)
+        global_step = tf.train.get_or_create_global_step()
+        learning_rate = tf.train.exponential_decay(self._config.lr,
+                                                   global_step=global_step,
+                                                   decay_steps=self._config.decay_steps,
+                                                   decay_rate=self._config.decay_rate)
+        learning_rate = tf.maximum(learning_rate, 1e-6)
+        optimizer = self._config.optimizer(learning_rate=learning_rate)
         # set train_op
         train_op = slim.learning.create_train_op(train_loss, optimizer)
       with tf.name_scope('metrics'):
@@ -861,6 +866,7 @@ class EpilepsyUnidirectionalLSTM(object):
                                                      num_classes=self._config.num_classes)
       self._train_loss = train_loss
       self._train_op = train_op
+      self._learning_rate = learning_rate
       self._train_accuracy = train_accuracy
       self._train_classes = train_classes
       self._train_logits = train_logits
@@ -912,6 +918,10 @@ class EpilepsyUnidirectionalLSTM(object):
   @property
   def labels(self):
     return self._labels
+
+  @property
+  def learning_rate(self):
+    return self._learning_rate
 
   @property
   def train_loss(self):
@@ -1004,14 +1014,13 @@ class EpilepsyBidirectionalLSTM(object):
         train_classes = tf.argmax(input=train_predictions, axis=1)
       with tf.name_scope('losses'):
         # set loss
-        train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits,
-                                                     reduction=Reduction.SUM_OVER_BATCH_SIZE)
-        # train_loss = WeightedCrossEntropyLoss(onehot_labels=train_one_hot_labels, logits=train_logits)
+        train_loss = tf.losses.softmax_cross_entropy(onehot_labels=train_one_hot_labels, logits=train_logits)
         # set optimizer
         global_step = tf.train.get_or_create_global_step()
         learning_rate = tf.train.exponential_decay(self._config.lr,
                                                    global_step=global_step,
-                                                   decay_steps=200, decay_rate=0.96)
+                                                   decay_steps=self._config.decay_steps,
+                                                   decay_rate=self._config.decay_rate)
         learning_rate = tf.maximum(learning_rate, 1e-6)
         optimizer = self._config.optimizer(learning_rate=learning_rate)
         # set train_op
@@ -1055,7 +1064,6 @@ class EpilepsyBidirectionalLSTM(object):
       with tf.name_scope('losses'):
         # set loss
         test_loss = tf.losses.softmax_cross_entropy(onehot_labels=test_one_hot_labels, logits=test_logits)
-        # test_loss = WeightedCrossEntropyLoss(onehot_labels=test_one_hot_labels, logits=test_logits)
       with tf.name_scope('metrics'):
         # get curr accuracy
         test_accuracy = tf.reduce_mean(
